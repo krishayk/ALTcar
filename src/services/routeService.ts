@@ -1,157 +1,15 @@
 import axios from 'axios';
 import { RouteRequest, RouteResponse } from '../types';
 
-// Google Maps API configuration
+// Google Maps API configuration with CORS proxy
 const GOOGLE_MAPS_API_KEY = 'AIzaSyDDCPnY2orRksw08gpAdHNnBIQ4FqzMsrs';
+const CORS_PROXY = 'https://corsproxy.io/?';
+const GOOGLE_DIRECTIONS_API_URL = `${CORS_PROXY}https://maps.googleapis.com/maps/api/directions/json`;
+const GOOGLE_GEOCODING_API_URL = `${CORS_PROXY}https://maps.googleapis.com/maps/api/geocode/json`;
 
-// Note: We'll use the Google Maps JavaScript API directly in the RouteMap component
-// to avoid CORS issues. This service will provide fallback calculations.
-export const calculateRoute = async (start: string, end: string, transportMode: 'car' | 'ferry' | 'plane' = 'car'): Promise<RouteResponse> => {
-  try {
-    let routeData;
-    let distanceMiles;
-    let durationMinutes;
-    let cost;
-
-    // For now, we'll use estimated calculations since direct API calls have CORS issues
-    // The actual route calculation will be done in the RouteMap component using Google Maps JavaScript API
-    
-    if (transportMode === 'car') {
-      // Estimate based on straight-line distance
-      const estimatedDistance = 50; // This will be replaced by actual Google Maps data
-      distanceMiles = estimatedDistance;
-      durationMinutes = Math.round(estimatedDistance * 1.5); // Rough estimate: 1.5 min per mile
-      
-      // Calculate fuel cost (assuming 25 mpg and $3.75/gallon)
-      const fuelCost = Math.round((distanceMiles / 25) * 3.75 * 100) / 100;
-      cost = { fuel: fuelCost };
-
-      // Placeholder coordinates - will be replaced by actual route data
-      routeData = { 
-        geometry: { 
-          coordinates: [
-            [37.7749, -122.4194], // San Francisco coordinates as placeholder
-            [37.7021, -121.9358]  // Dublin coordinates as placeholder
-          ] 
-        } 
-      };
-    } else if (transportMode === 'ferry') {
-      // Estimate based on straight-line distance
-      const estimatedDistance = 30; // This will be replaced by actual Google Maps data
-      distanceMiles = estimatedDistance;
-      durationMinutes = Math.round(estimatedDistance * 2.5); // Ferries are slower
-      
-      const ticketCost = Math.round(calculateFerryTicketCost(estimatedDistance, [37.7749, -122.4194], [37.7021, -121.9358]));
-      cost = { fuel: 0, ticket: ticketCost };
-
-      routeData = { 
-        geometry: { 
-          coordinates: [
-            [37.7749, -122.4194], // San Francisco coordinates as placeholder
-            [37.7021, -121.9358]  // Dublin coordinates as placeholder
-          ] 
-        } 
-      };
-    } else if (transportMode === 'plane') {
-      // Estimate based on straight-line distance
-      const estimatedDistance = 50; // This will be replaced by actual Google Maps data
-      distanceMiles = estimatedDistance;
-      
-      // Use distance-based calculation for flight times
-      let flightTimeHours;
-      if (estimatedDistance <= 300) {
-        flightTimeHours = 1.2; // Short domestic flights
-      } else if (estimatedDistance <= 800) {
-        flightTimeHours = 2.0; // Medium domestic flights
-      } else if (estimatedDistance <= 1500) {
-        flightTimeHours = 3.0; // Long domestic flights
-      } else {
-        flightTimeHours = 4.5; // International flights
-      }
-      
-      const baseTime = flightTimeHours + (estimatedDistance * 0.0005);
-      durationMinutes = Math.round(baseTime * 60);
-      
-      const ticketCost = Math.round(calculateEstimatedFlightCost(estimatedDistance, [37.7749, -122.4194], [37.7021, -121.9358]));
-      cost = { fuel: 0, ticket: ticketCost };
-      
-      routeData = { 
-        geometry: { 
-          coordinates: [
-            [37.7749, -122.4194], // San Francisco coordinates as placeholder
-            [37.7021, -121.9358]  // Dublin coordinates as placeholder
-          ] 
-        } 
-      };
-    }
-
-    return {
-      distance: distanceMiles,
-      duration: durationMinutes,
-      route: {
-        coordinates: routeData.geometry.coordinates,
-        summary: `Route from ${start} to ${end}`,
-        startAddress: start,
-        endAddress: end
-      },
-      cost,
-      transportMode
-    };
-  } catch (error) {
-    console.error('Error calculating route:', error);
-    throw new Error(`Failed to calculate ${transportMode} route. Please check your addresses.`);
-  }
-};
-
-// Simplified ferry ticket cost calculation
-const calculateFerryTicketCost = (distanceMiles: number, startCoords: [number, number], endCoords: [number, number]): number => {
-  let baseCost = 0;
-  let perMileCost = 0;
-  
-  if (distanceMiles <= 5) {
-    baseCost = 8;
-    perMileCost = 1.5;
-  } else if (distanceMiles <= 15) {
-    baseCost = 15;
-    perMileCost = 2.0;
-  } else if (distanceMiles <= 50) {
-    baseCost = 25;
-    perMileCost = 2.5;
-  } else {
-    baseCost = 40;
-    perMileCost = 3.0;
-  }
-  
-  const calculatedCost = baseCost + (distanceMiles * perMileCost);
-  return Math.max(5, calculatedCost);
-};
-
-// Simplified flight cost calculation
-const calculateEstimatedFlightCost = (distanceMiles: number, startCoords: [number, number], endCoords: [number, number]): number => {
-  let baseCost = 0;
-  let perMileCost = 0;
-  
-  if (distanceMiles <= 100) {
-    baseCost = 80;
-    perMileCost = 0.12;
-  } else if (distanceMiles <= 500) {
-    baseCost = 120;
-    perMileCost = 0.15;
-  } else if (distanceMiles <= 1500) {
-    baseCost = 200;
-    perMileCost = 0.18;
-  } else {
-    baseCost = 300;
-    perMileCost = 0.20;
-  }
-  
-  const calculatedCost = baseCost + (distanceMiles * perMileCost);
-  return Math.max(50, calculatedCost);
-};
-
-// Decode Google Maps polyline to get coordinates
-const decodePolyline = (encoded: string): [number, number][] => {
-  const coordinates: [number, number][] = [];
+// Helper function to decode Google's polyline
+function decodePolyline(encoded: string): [number, number][] {
+  const poly = [];
   let index = 0, len = encoded.length;
   let lat = 0, lng = 0;
 
@@ -179,8 +37,176 @@ const decodePolyline = (encoded: string): [number, number][] => {
     let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
     lng += dlng;
 
-    coordinates.push([lat / 1e5, lng / 1e5]);
+    poly.push([lat / 1E5, lng / 1E5]);
   }
 
-  return coordinates;
+  return poly;
+}
+
+// Helper function to calculate ferry ticket cost
+function calculateFerryTicketCost(distanceMiles: number, start: [number, number], end: [number, number]): number {
+  // Base ferry ticket cost with distance multiplier
+  const baseCost = 15;
+  const distanceMultiplier = distanceMiles * 0.5;
+  return Math.round((baseCost + distanceMultiplier) * 100) / 100;
+}
+
+// Helper function to calculate estimated flight cost
+function calculateEstimatedFlightCost(distanceMiles: number, start: [number, number], end: [number, number]): number {
+  // Base flight cost with distance multiplier
+  const baseCost = 100;
+  const distanceMultiplier = distanceMiles * 0.8;
+  return Math.round((baseCost + distanceMultiplier) * 100) / 100;
+}
+
+export const calculateRoute = async (start: string, end: string, transportMode: 'car' | 'ferry' | 'plane' = 'car'): Promise<RouteResponse> => {
+  try {
+    let routeData: { geometry: { coordinates: [number, number][] } } = { geometry: { coordinates: [] } };
+    let distanceMiles: number = 0;
+    let durationMinutes: number = 0;
+    let cost: { fuel: number; ticket?: number } = { fuel: 0 };
+
+    if (transportMode === 'car') {
+      // Use Google Directions API for car routes
+      const response = await axios.get(GOOGLE_DIRECTIONS_API_URL, {
+        params: {
+          origin: start,
+          destination: end,
+          mode: 'driving',
+          key: GOOGLE_MAPS_API_KEY
+        }
+      });
+
+      if (response.data.status !== 'OK' || !response.data.routes || response.data.routes.length === 0) {
+        throw new Error('No car route found. Please check your addresses.');
+      }
+
+      const route = response.data.routes[0];
+      const leg = route.legs[0];
+      
+      // Convert meters to miles and round to nearest whole number
+      distanceMiles = Math.round(leg.distance.value * 0.000621371);
+      
+      // Convert seconds to minutes and round to nearest whole number
+      durationMinutes = Math.round(leg.duration.value / 60);
+      
+      // Calculate fuel cost (assuming 25 mpg and $3.75/gallon) and round to nearest cent
+      const fuelCost = Math.round((distanceMiles / 25) * 3.75 * 100) / 100;
+      cost = { fuel: fuelCost };
+
+      // Extract route coordinates directly from Google
+      const coordinates: [number, number][] = [];
+      if (route.overview_polyline && route.overview_polyline.points) {
+        coordinates.push(...decodePolyline(route.overview_polyline.points));
+      } else {
+        coordinates.push([leg.start_location.lat, leg.start_location.lng]);
+        coordinates.push([leg.end_location.lat, leg.end_location.lng]);
+      }
+
+      routeData = { geometry: { coordinates } };
+    } else if (transportMode === 'ferry') {
+      // Use Google Directions API for ferry routes with transit mode to get actual ferry times
+      const response = await axios.get(GOOGLE_DIRECTIONS_API_URL, {
+        params: {
+          origin: start,
+          destination: end,
+          mode: 'transit',
+          key: GOOGLE_MAPS_API_KEY
+        }
+      });
+
+      if (response.data.status !== 'OK' || !response.data.routes || response.data.routes.length === 0) {
+        throw new Error('No ferry route found. Please check your addresses.');
+      }
+
+      // Use Google's actual ferry route data
+      const route = response.data.routes[0];
+      const leg = route.legs[0];
+      
+      // Convert meters to miles and round to nearest whole number
+      distanceMiles = Math.round(leg.distance.value * 0.000621371);
+      
+      // Use Google's actual duration for ferry routes
+      durationMinutes = Math.round(leg.duration.value / 60);
+      
+      const ticketCost = Math.round(calculateFerryTicketCost(distanceMiles, [leg.start_location.lat, leg.start_location.lng], [leg.end_location.lat, leg.end_location.lng]));
+      cost = { fuel: 0, ticket: ticketCost };
+
+      // Extract route coordinates directly from Google
+      const coordinates: [number, number][] = [];
+      if (route.overview_polyline && route.overview_polyline.points) {
+        coordinates.push(...decodePolyline(route.overview_polyline.points));
+      } else {
+        coordinates.push([leg.start_location.lat, leg.start_location.lng]);
+        coordinates.push([leg.end_location.lat, leg.end_location.lng]);
+      }
+      routeData = { geometry: { coordinates } };
+    } else if (transportMode === 'plane') {
+      // Use Google Directions API for plane routes with driving mode to get direct path
+      const response = await axios.get(GOOGLE_DIRECTIONS_API_URL, {
+        params: {
+          origin: start,
+          destination: end,
+          mode: 'driving',
+          key: GOOGLE_MAPS_API_KEY
+        }
+      });
+
+      if (response.data.status !== 'OK' || !response.data.routes || response.data.routes.length === 0) {
+        throw new Error('No plane route found. Please check your addresses.');
+      }
+
+      const route = response.data.routes[0];
+      const leg = route.legs[0];
+      
+      // Convert meters to miles and round to nearest whole number
+      distanceMiles = Math.round(leg.distance.value * 0.000621371);
+      
+      // Use Google's actual flight time data when available, or calculate based on distance
+      // For now, use distance-based calculation since Google doesn't provide flight times in Directions API
+      let flightTimeHours;
+      if (distanceMiles <= 300) {
+        flightTimeHours = 1.2; // Short domestic flights
+      } else if (distanceMiles <= 800) {
+        flightTimeHours = 2.0; // Medium domestic flights
+      } else if (distanceMiles <= 1500) {
+        flightTimeHours = 3.0; // Long domestic flights
+      } else {
+        flightTimeHours = 4.5; // International flights
+      }
+      
+      // Add some variation based on distance
+      const baseTime = flightTimeHours + (distanceMiles * 0.0005);
+      durationMinutes = Math.round(baseTime * 60);
+      
+      const ticketCost = Math.round(calculateEstimatedFlightCost(distanceMiles, [leg.start_location.lat, leg.start_location.lng], [leg.end_location.lat, leg.end_location.lng]));
+      cost = { fuel: 0, ticket: ticketCost };
+      
+      // Extract route coordinates directly from Google for plane path
+      const coordinates: [number, number][] = [];
+      if (route.overview_polyline && route.overview_polyline.points) {
+        coordinates.push(...decodePolyline(route.overview_polyline.points));
+      } else {
+        coordinates.push([leg.start_location.lat, leg.start_location.lng]);
+        coordinates.push([leg.end_location.lat, leg.end_location.lng]);
+      }
+      routeData = { geometry: { coordinates } };
+    }
+
+    return {
+      distance: distanceMiles,
+      duration: durationMinutes,
+      route: {
+        coordinates: routeData.geometry.coordinates,
+        summary: `Route from ${start} to ${end}`,
+        startAddress: start,
+        endAddress: end
+      },
+      cost,
+      transportMode
+    };
+  } catch (error) {
+    console.error('Error calculating route:', error);
+    throw new Error(`Failed to calculate ${transportMode} route. Please check your addresses.`);
+  }
 }; 
