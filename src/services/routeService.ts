@@ -3,8 +3,8 @@ import { RouteRequest, RouteResponse } from '../types';
 
 // Google Maps API configuration
 const GOOGLE_MAPS_API_KEY = 'AIzaSyDDCPnY2orRksw08gpAdHNnBIQ4FqzMsrs';
-const GOOGLE_DIRECTIONS_API_URL = '/api/google/maps/api/directions/json';
-const GOOGLE_GEOCODING_API_URL = '/api/google/maps/api/geocode/json';
+const GOOGLE_DIRECTIONS_API_URL = 'https://maps.googleapis.com/maps/api/directions/json';
+const GOOGLE_GEOCODING_API_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
 
 export const calculateRoute = async (start: string, end: string, transportMode: 'car' | 'ferry' | 'plane' = 'car'): Promise<RouteResponse> => {
   try {

@@ -69,88 +69,61 @@ const RouteMap: React.FC<RouteMapProps> = ({ route, isLoading }) => {
 
     console.log('Processing route:', route.transportMode);
 
-    // Clear previous directions and overlays
+    // Clear previous directions
     directionsRenderer.setDirections(null);
-    
-    // Clear any existing polylines and markers by recreating the map
-    if (mapRef.current) {
-      const newMap = new google.maps.Map(mapRef.current, {
-        center: { lat: 40.7128, lng: -74.0060 },
-        zoom: 10,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        zoomControl: true,
-        streetViewControl: true,
-        mapTypeControl: true,
-        fullscreenControl: true
-      });
+
+    if (route.transportMode === 'car') {
+      console.log('Processing car route...');
       
-      const newDirectionsRenderer = new google.maps.DirectionsRenderer({
-        map: newMap,
-        suppressMarkers: false,
-        polylineOptions: {
-          strokeColor: '#007bff',
-          strokeWeight: 5,
-          strokeOpacity: 0.8
+      // Use Google Directions API for driving routes
+      const request: google.maps.DirectionsRequest = {
+        origin: { lat: route.route.coordinates[0][0], lng: route.route.coordinates[0][1] },
+        destination: { lat: route.route.coordinates[route.route.coordinates.length - 1][0], lng: route.route.coordinates[route.route.coordinates.length - 1][1] },
+        travelMode: google.maps.TravelMode.DRIVING
+      };
+
+      directionsService.route(request, (result, status) => {
+        if (status === 'OK' && result) {
+          console.log('Car route directions OK');
+          directionsRenderer.setDirections(result);
+          
+          // Fit bounds to show the entire route
+          if (result.routes && result.routes[0] && result.routes[0].bounds) {
+            map.fitBounds(result.routes[0].bounds);
+            // Add some padding to the bounds
+            const currentZoom = map.getZoom() || 10;
+            map.setZoom(Math.min(currentZoom, 15));
+          }
+        } else {
+          console.error('Car directions request failed:', status);
+          // Fallback to polyline if directions fail
+          displayPolylineRoute();
         }
       });
-      
-      setMap(newMap);
-      setDirectionsRenderer(newDirectionsRenderer);
-      
-      // Update the local variables for this function
-      const currentMap = newMap;
-      const currentDirectionsRenderer = newDirectionsRenderer;
-      
-      if (route.transportMode === 'car') {
-        console.log('Processing car route...');
-        
-        // Use Google Directions API for driving routes
-        const request: google.maps.DirectionsRequest = {
-          origin: { lat: route.route.coordinates[0][0], lng: route.route.coordinates[0][1] },
-          destination: { lat: route.route.coordinates[route.route.coordinates.length - 1][0], lng: route.route.coordinates[route.route.coordinates.length - 1][1] },
-          travelMode: google.maps.TravelMode.DRIVING
-        };
+    } else {
+      console.log('Processing ferry/plane route...');
+      displayPolylineRoute();
+    }
 
-        directionsService.route(request, (result, status) => {
-          if (status === 'OK' && result) {
-            console.log('Car route directions OK');
-            currentDirectionsRenderer.setDirections(result);
-            
-            // Fit bounds to show the entire route
-            if (result.routes && result.routes[0] && result.routes[0].bounds) {
-              currentMap.fitBounds(result.routes[0].bounds);
-              // Add some padding to the bounds
-              currentMap.setZoom(Math.min(currentMap.getZoom() || 10, 15));
-            }
-          } else {
-            console.error('Car directions request failed:', status);
-            // Fallback to polyline if directions fail
-            displayPolylineRoute(currentMap);
-          }
-        });
-      } else {
-        console.log('Processing ferry/plane route...');
-        displayPolylineRoute(currentMap);
-      }
+    function displayPolylineRoute() {
+      if (!route) return;
+      
+      // Create a polyline for the route
+      const path = new google.maps.Polyline({
+        path: route.route.coordinates.map(coord => ({ lat: coord[0], lng: coord[1] })),
+        geodesic: true,
+        strokeColor: route.transportMode === 'ferry' ? '#FF6B35' : '#FFD700',
+        strokeOpacity: 0.8,
+        strokeWeight: 5
+      });
 
-      function displayPolylineRoute(currentMap: google.maps.Map) {
-        if (!route) return;
-        
-        // Create a polyline for the route
-        const path = new google.maps.Polyline({
-          path: route.route.coordinates.map(coord => ({ lat: coord[0], lng: coord[1] })),
-          geodesic: true,
-          strokeColor: route.transportMode === 'ferry' ? '#FF6B35' : '#FFD700',
-          strokeOpacity: 0.8,
-          strokeWeight: 5
-        });
-
-        path.setMap(currentMap);
+      if (map) {
+        path.setMap(map);
 
         // Add start and end markers
         new google.maps.Marker({
           position: { lat: route.route.coordinates[0][0], lng: route.route.coordinates[0][1] },
-          map: currentMap,
+          map: map,
           title: 'Start',
           icon: {
             url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2300FF00"><circle cx="12" cy="12" r="10"/></svg>'),
@@ -160,7 +133,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ route, isLoading }) => {
 
         new google.maps.Marker({
           position: { lat: route.route.coordinates[route.route.coordinates.length - 1][0], lng: route.route.coordinates[route.route.coordinates.length - 1][1] },
-          map: currentMap,
+          map: map,
           title: 'Destination',
           icon: {
             url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FF0000"><circle cx="12" cy="12" r="10"/></svg>'),
@@ -176,15 +149,18 @@ const RouteMap: React.FC<RouteMapProps> = ({ route, isLoading }) => {
         
         // Add some padding to the bounds
         const padding = { top: 50, right: 50, bottom: 50, left: 50 };
-        currentMap.fitBounds(bounds, padding);
-        
-        // Set a reasonable zoom level
-        if (currentMap.getZoom() && currentMap.getZoom() > 18) {
-          currentMap.setZoom(18);
-        }
-        
-        console.log('Polyline route displayed');
+        map.fitBounds(bounds, padding);
       }
+      
+      // Set a reasonable zoom level
+      if (map) {
+        const currentZoom = map.getZoom() || 10;
+        if (currentZoom > 18) {
+          map.setZoom(18);
+        }
+      }
+      
+      console.log('Polyline route displayed');
     }
   }, [route, map, directionsService, directionsRenderer]);
 
