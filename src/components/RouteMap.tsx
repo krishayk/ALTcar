@@ -99,6 +99,24 @@ const RouteMap: React.FC<RouteMapProps> = ({ route, isLoading }) => {
             try {
               directionsRenderer.setDirections(result);
               
+              // Update the route with real data from Google
+              if (result.routes && result.routes[0] && result.routes[0].legs && result.routes[0].legs[0]) {
+                const leg = result.routes[0].legs[0];
+                if (leg.distance && leg.duration) {
+                  const realDistance = Math.round(leg.distance.value * 0.000621371);
+                  const realDuration = Math.round(leg.duration.value / 60);
+                  
+                  // Update the route object with real data
+                  route.distance = realDistance;
+                  route.duration = realDuration;
+                  
+                  // Update cost based on real distance
+                  route.cost.fuel = Math.round((realDistance / 25) * 3.75 * 100) / 100;
+                  
+                  console.log(`Real route data: ${realDistance} miles, ${realDuration} minutes`);
+                }
+              }
+              
               // Fit bounds to show the entire route
               if (result.routes && result.routes[0] && result.routes[0].bounds) {
                 map.fitBounds(result.routes[0].bounds);
@@ -132,6 +150,24 @@ const RouteMap: React.FC<RouteMapProps> = ({ route, isLoading }) => {
             console.log('Ferry route directions OK');
             try {
               directionsRenderer.setDirections(result);
+              
+              // Update the route with real data from Google
+              if (result.routes && result.routes[0] && result.routes[0].legs && result.routes[0].legs[0]) {
+                const leg = result.routes[0].legs[0];
+                if (leg.distance && leg.duration) {
+                  const realDistance = Math.round(leg.distance.value * 0.000621371);
+                  const realDuration = Math.round(leg.duration.value / 60);
+                  
+                  // Update the route object with real data
+                  route.distance = realDistance;
+                  route.duration = realDuration;
+                  
+                  // Update ticket cost based on real distance
+                  route.cost.ticket = Math.round((15 + realDistance * 0.5) * 100) / 100;
+                  
+                  console.log(`Real ferry data: ${realDistance} miles, ${realDuration} minutes`);
+                }
+              }
               
               // Fit bounds to show the entire route
               if (result.routes && result.routes[0] && result.routes[0].bounds) {
