@@ -67,87 +67,104 @@ const RouteMap: React.FC<RouteMapProps> = ({ route, isLoading }) => {
       return;
     }
 
-    console.log('Processing route:', route.transportMode);
+    // Add a small delay to ensure the map and directions renderer are fully initialized
+    const timer = setTimeout(() => {
+      console.log('Processing route:', route.transportMode);
 
-    // Clear previous directions
-    directionsRenderer.setDirections(null);
+      // Clear previous directions and ensure directionsRenderer is properly set
+      try {
+        directionsRenderer.setDirections(null);
+      } catch (error) {
+        console.error('Error clearing directions:', error);
+        return;
+      }
 
-    // Get the actual addresses from the route
-    const startAddress = route.route.startAddress || 'San Francisco, CA';
-    const endAddress = route.route.endAddress || 'Dublin, CA';
+      // Get the actual addresses from the route
+      const startAddress = route.route.startAddress || 'San Francisco, CA';
+      const endAddress = route.route.endAddress || 'Dublin, CA';
 
-    if (route.transportMode === 'car') {
-      console.log('Processing car route...');
-      
-      // Use Google Directions API for driving routes
-      const request: google.maps.DirectionsRequest = {
-        origin: startAddress,
-        destination: endAddress,
-        travelMode: google.maps.TravelMode.DRIVING
-      };
+      if (route.transportMode === 'car') {
+        console.log('Processing car route...');
+        
+        // Use Google Directions API for driving routes
+        const request: google.maps.DirectionsRequest = {
+          origin: startAddress,
+          destination: endAddress,
+          travelMode: google.maps.TravelMode.DRIVING
+        };
 
-      directionsService.route(request, (result, status) => {
-        if (status === 'OK' && result) {
-          console.log('Car route directions OK');
-          directionsRenderer.setDirections(result);
-          
-          // Fit bounds to show the entire route
-          if (result.routes && result.routes[0] && result.routes[0].bounds) {
-            map.fitBounds(result.routes[0].bounds);
-            // Add some padding to the bounds
-            const currentZoom = map.getZoom() || 10;
-            map.setZoom(Math.min(currentZoom, 15));
+        directionsService.route(request, (result, status) => {
+          if (status === 'OK' && result) {
+            console.log('Car route directions OK');
+            try {
+              directionsRenderer.setDirections(result);
+              
+              // Fit bounds to show the entire route
+              if (result.routes && result.routes[0] && result.routes[0].bounds) {
+                map.fitBounds(result.routes[0].bounds);
+                // Add some padding to the bounds
+                const currentZoom = map.getZoom() || 10;
+                map.setZoom(Math.min(currentZoom, 15));
+              }
+            } catch (error) {
+              console.error('Error setting directions:', error);
+              // Fallback to polyline if directions fail
+              displayPolylineRoute();
+            }
+          } else {
+            console.error('Car directions request failed:', status);
+            // Fallback to polyline if directions fail
+            displayPolylineRoute();
           }
-        } else {
-          console.error('Car directions request failed:', status);
-          // Fallback to polyline if directions fail
-          displayPolylineRoute();
-        }
-      });
-    } else if (route.transportMode === 'ferry') {
-      console.log('Processing ferry route...');
-      
-      // For ferry routes, try to get transit directions
-      const request: google.maps.DirectionsRequest = {
-        origin: startAddress,
-        destination: endAddress,
-        travelMode: google.maps.TravelMode.TRANSIT
-      };
+        });
+      } else if (route.transportMode === 'ferry') {
+        console.log('Processing ferry route...');
+        
+        // For ferry routes, try to get transit directions
+        const request: google.maps.DirectionsRequest = {
+          origin: startAddress,
+          destination: endAddress,
+          travelMode: google.maps.TravelMode.TRANSIT
+        };
 
-      directionsService.route(request, (result, status) => {
-        if (status === 'OK' && result) {
-          console.log('Ferry route directions OK');
-          directionsRenderer.setDirections(result);
-          
-          // Fit bounds to show the entire route
-          if (result.routes && result.routes[0] && result.routes[0].bounds) {
-            map.fitBounds(result.routes[0].bounds);
-            const currentZoom = map.getZoom() || 10;
-            map.setZoom(Math.min(currentZoom, 15));
+        directionsService.route(request, (result, status) => {
+          if (status === 'OK' && result) {
+            console.log('Ferry route directions OK');
+            try {
+              directionsRenderer.setDirections(result);
+              
+              // Fit bounds to show the entire route
+              if (result.routes && result.routes[0] && result.routes[0].bounds) {
+                map.fitBounds(result.routes[0].bounds);
+                const currentZoom = map.getZoom() || 10;
+                map.setZoom(Math.min(currentZoom, 15));
+              }
+            } catch (error) {
+              console.error('Error setting ferry directions:', error);
+              displayPolylineRoute();
+            }
+          } else {
+            console.log('Ferry directions not available, using polyline');
+            displayPolylineRoute();
           }
-        } else {
-          console.log('Ferry directions not available, using polyline');
-          displayPolylineRoute();
-        }
-      });
-    } else {
-      console.log('Processing plane route...');
-      displayPolylineRoute();
-    }
+        });
+      } else {
+        console.log('Processing plane route...');
+        displayPolylineRoute();
+      }
 
-    function displayPolylineRoute() {
-      if (!route) return;
-      
-      // Create a polyline for the route
-      const path = new google.maps.Polyline({
-        path: route.route.coordinates.map(coord => ({ lat: coord[0], lng: coord[1] })),
-        geodesic: true,
-        strokeColor: route.transportMode === 'ferry' ? '#FF6B35' : '#FFD700',
-        strokeOpacity: 0.8,
-        strokeWeight: 5
-      });
+      function displayPolylineRoute() {
+        if (!route || !map) return;
+        
+        // Create a polyline for the route
+        const path = new google.maps.Polyline({
+          path: route.route.coordinates.map(coord => ({ lat: coord[0], lng: coord[1] })),
+          geodesic: true,
+          strokeColor: route.transportMode === 'ferry' ? '#FF6B35' : '#FFD700',
+          strokeOpacity: 0.8,
+          strokeWeight: 5
+        });
 
-      if (map) {
         path.setMap(map);
 
         // Add start and end markers
@@ -182,16 +199,16 @@ const RouteMap: React.FC<RouteMapProps> = ({ route, isLoading }) => {
         map.fitBounds(bounds, padding);
         
         // Set a reasonable zoom level
-        if (map) {
-          const currentZoom = map.getZoom() || 10;
-          if (currentZoom > 18) {
-            map.setZoom(18);
-          }
+        const currentZoom = map.getZoom() || 10;
+        if (currentZoom > 18) {
+          map.setZoom(18);
         }
+        
+        console.log('Polyline route displayed');
       }
-      
-      console.log('Polyline route displayed');
-    }
+    }, 100); // Small delay to ensure everything is ready
+
+    return () => clearTimeout(timer);
   }, [route, map, directionsService, directionsRenderer]);
 
   if (isLoading) {
