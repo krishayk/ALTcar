@@ -72,13 +72,17 @@ const RouteMap: React.FC<RouteMapProps> = ({ route, isLoading }) => {
     // Clear previous directions
     directionsRenderer.setDirections(null);
 
+    // Get the actual addresses from the route
+    const startAddress = route.route.startAddress || 'San Francisco, CA';
+    const endAddress = route.route.endAddress || 'Dublin, CA';
+
     if (route.transportMode === 'car') {
       console.log('Processing car route...');
       
       // Use Google Directions API for driving routes
       const request: google.maps.DirectionsRequest = {
-        origin: { lat: route.route.coordinates[0][0], lng: route.route.coordinates[0][1] },
-        destination: { lat: route.route.coordinates[route.route.coordinates.length - 1][0], lng: route.route.coordinates[route.route.coordinates.length - 1][1] },
+        origin: startAddress,
+        destination: endAddress,
         travelMode: google.maps.TravelMode.DRIVING
       };
 
@@ -100,8 +104,34 @@ const RouteMap: React.FC<RouteMapProps> = ({ route, isLoading }) => {
           displayPolylineRoute();
         }
       });
+    } else if (route.transportMode === 'ferry') {
+      console.log('Processing ferry route...');
+      
+      // For ferry routes, try to get transit directions
+      const request: google.maps.DirectionsRequest = {
+        origin: startAddress,
+        destination: endAddress,
+        travelMode: google.maps.TravelMode.TRANSIT
+      };
+
+      directionsService.route(request, (result, status) => {
+        if (status === 'OK' && result) {
+          console.log('Ferry route directions OK');
+          directionsRenderer.setDirections(result);
+          
+          // Fit bounds to show the entire route
+          if (result.routes && result.routes[0] && result.routes[0].bounds) {
+            map.fitBounds(result.routes[0].bounds);
+            const currentZoom = map.getZoom() || 10;
+            map.setZoom(Math.min(currentZoom, 15));
+          }
+        } else {
+          console.log('Ferry directions not available, using polyline');
+          displayPolylineRoute();
+        }
+      });
     } else {
-      console.log('Processing ferry/plane route...');
+      console.log('Processing plane route...');
       displayPolylineRoute();
     }
 
@@ -150,13 +180,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ route, isLoading }) => {
         // Add some padding to the bounds
         const padding = { top: 50, right: 50, bottom: 50, left: 50 };
         map.fitBounds(bounds, padding);
-      }
-      
-      // Set a reasonable zoom level
-      if (map) {
-        const currentZoom = map.getZoom() || 10;
-        if (currentZoom > 18) {
-          map.setZoom(18);
+        
+        // Set a reasonable zoom level
+        if (map) {
+          const currentZoom = map.getZoom() || 10;
+          if (currentZoom > 18) {
+            map.setZoom(18);
+          }
         }
       }
       

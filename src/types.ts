@@ -9,6 +9,8 @@ export interface RouteResponse {
   route: {
     coordinates: [number, number][];
     summary: string;
+    startAddress: string;
+    endAddress: string;
   };
   cost: {
     fuel: number;
