@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { RouteMapProps, RouteResponse } from '../types';
 
+// NOTE: To fix the "RefererNotAllowedMapError", you need to:
+// 1. Go to Google Cloud Console > APIs & Services > Credentials
+// 2. Find your Maps JavaScript API key
+// 3. Add "https://altroute-one.vercel.app/*" to the "Application restrictions" > "HTTP referrers (web sites)"
+// 4. Or set "Application restrictions" to "None" for development (less secure)
+
 interface AllRoutes {
   car: any;
   ferry: any;
@@ -12,7 +18,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const directionsRendererRefs = useRef<google.maps.DirectionsRenderer[]>([]);
   const polylineRefs = useRef<google.maps.Polyline[]>([]);
-  const markerRefs = useRef<google.maps.Marker[]>([]);
+  const markerRefs = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const [showFerryControls, setShowFerryControls] = useState<boolean>(false);
 
   // Function to add a route
@@ -156,33 +162,37 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       // Store reference to polyline for cleanup
       polylineRefs.current.push(ferryRoute);
 
-      // Add markers for start and end points
-      const startMarker = new google.maps.Marker({
+      // Add markers for start and end points using AdvancedMarkerElement
+      const startMarkerElement = document.createElement('div');
+      startMarkerElement.style.width = '16px';
+      startMarkerElement.style.height = '16px';
+      startMarkerElement.style.borderRadius = '50%';
+      startMarkerElement.style.backgroundColor = color;
+      startMarkerElement.style.border = '2px solid #ffffff';
+      startMarkerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+      startMarkerElement.title = 'Ferry Start';
+
+      const endMarkerElement = document.createElement('div');
+      endMarkerElement.style.width = '16px';
+      endMarkerElement.style.height = '16px';
+      endMarkerElement.style.borderRadius = '50%';
+      endMarkerElement.style.backgroundColor = color;
+      endMarkerElement.style.border = '2px solid #ffffff';
+      endMarkerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+      endMarkerElement.title = 'Ferry End';
+
+      const startMarker = new google.maps.marker.AdvancedMarkerElement({
         position: { lat: coordinates[0][0], lng: coordinates[0][1] },
         map: map,
         title: 'Ferry Start',
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: color,
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2
-        }
+        content: startMarkerElement
       });
 
-      const endMarker = new google.maps.Marker({
+      const endMarker = new google.maps.marker.AdvancedMarkerElement({
         position: { lat: coordinates[coordinates.length - 1][0], lng: coordinates[coordinates.length - 1][1] },
         map: map,
         title: 'Ferry End',
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: color,
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2
-        }
+        content: endMarkerElement
       });
 
       markerRefs.current.push(startMarker, endMarker);
@@ -234,7 +244,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
 
     // Load Google Maps API
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=geometry`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=geometry&loading=async`;
     script.async = true;
     script.defer = true;
     
@@ -289,7 +299,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       // Clear all stored polylines and markers
       polylineRefs.current.forEach(polyline => polyline.setMap(null));
       polylineRefs.current = [];
-      markerRefs.current.forEach(marker => marker.setMap(null));
+      markerRefs.current.forEach(marker => marker.map = null);
       markerRefs.current = [];
       
       // Redraw all routes with new settings
