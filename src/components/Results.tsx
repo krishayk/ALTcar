@@ -1,7 +1,7 @@
 import React from 'react';
 import { ResultsProps } from '../types';
 
-const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved }) => {
+const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferryDirection, curveSize }) => {
   const saveRoutes = () => {
     if (!routes) return;
     
@@ -14,7 +14,9 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved }) =>
         car: routes.car,
         ferry: routes.ferry,
         plane: routes.plane
-      }
+      },
+      ferryDirection: ferryDirection, // Save the ferry direction preference
+      curveSize: curveSize // Save the curve size preference
     };
 
     // Get existing saved routes

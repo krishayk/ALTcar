@@ -37,6 +37,21 @@ export interface SavedRoute { // New interface for saved routes
   createdAt: string;
 }
 
+export interface SavedRouteComparison {
+  id: string;
+  name: string;
+  startAddress: string;
+  endAddress: string;
+  routes: {
+    car: RouteResponse | null;
+    ferry: RouteResponse | null;
+    plane: RouteResponse | null;
+  };
+  ferryDirection: boolean; // true = left, false = right
+  curveSize: number; // Controls the width of the ferry curve
+  createdAt: string;
+}
+
 export interface RouteMapProps {
   routes: {
     car: RouteResponse | null;
@@ -44,6 +59,10 @@ export interface RouteMapProps {
     plane: RouteResponse | null;
   } | null;
   isLoading: boolean;
+  ferryDirection: boolean;
+  setFerryDirection: (direction: boolean) => void;
+  curveSize: number;
+  setCurveSize: (size: number) => void;
 }
 
 export interface RouteFormProps {
@@ -59,4 +78,6 @@ export interface ResultsProps {
   } | null;
   isLoading: boolean;
   onRouteSaved?: () => void;
+  ferryDirection: boolean;
+  curveSize: number;
 } 
