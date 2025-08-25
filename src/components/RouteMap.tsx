@@ -258,33 +258,33 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         }
 
         try {
-        // Initialize the map
-        const map = new google.maps.Map(mapRef.current!, {
-          center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
-          zoom: 10,
-          mapTypeId: 'roadmap', // Use string instead of deprecated MapTypeId.ROADMAP
-          mapTypeControl: true,
-          streetViewControl: false,
-          fullscreenControl: true
-        });
+          // Initialize the map
+          const map = new google.maps.Map(mapRef.current!, {
+            center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
+            zoom: 10,
+            mapTypeId: 'roadmap', // Use string instead of deprecated MapTypeId.ROADMAP
+            mapTypeControl: true,
+            streetViewControl: false,
+            fullscreenControl: true
+          });
 
-      mapInstanceRef.current = map;
+          mapInstanceRef.current = map;
 
-      // Initialize directions service
-      const directionsService = new google.maps.DirectionsService();
-      // directionsServiceRef.current = directionsService; // This line is removed as per the new_code
+          // Initialize directions service
+          const directionsService = new google.maps.DirectionsService();
+          // directionsServiceRef.current = directionsService; // This line is removed as per the new_code
 
-      // Clear previous renderers
-      directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
-      directionsRendererRefs.current = [];
+          // Clear previous renderers
+          directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
+          directionsRendererRefs.current = [];
 
-      const bounds = new google.maps.LatLngBounds();
-      let routeCount = 0;
+          const bounds = new google.maps.LatLngBounds();
+          let routeCount = 0;
 
-      // Add each route with different colors
-      if (routes.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
-      if (routes.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
-      if (routes.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
+          // Add each route with different colors
+          if (routes.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
+          if (routes.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
+          if (routes.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
         } catch (error) {
           console.error('Error initializing Google Maps:', error);
         }
