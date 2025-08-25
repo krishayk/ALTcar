@@ -528,8 +528,8 @@ body {
 }
 
 .curve-control {
-  margin-top: 4px;
-  padding-top: 8px;
+  margin-top: -4px;
+  padding-top: 4px;
   border-top: 1px solid #e5e7eb;
   gap: 12px !important;
   align-items: center;
