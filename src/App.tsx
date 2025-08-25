@@ -19,6 +19,8 @@ const App: React.FC = () => {
   const [savedRoutes, setSavedRoutes] = useState<any[]>([]);
   const [ferryDirection, setFerryDirection] = useState<boolean>(true); // true = left, false = right
   const [curveSize, setCurveSize] = useState<number>(5); // Controls the width of the ferry curve
+  const [startInput, setStartInput] = useState<string>('');
+  const [endInput, setEndInput] = useState<string>('');
 
   useEffect(() => {
     // Load saved routes on component mount
@@ -58,6 +60,8 @@ const App: React.FC = () => {
   };
 
   const handleViewRoute = (start: string, end: string) => {
+    setStartInput(start);
+    setEndInput(end);
     handleCalculateRoute(start, end);
   };
 
@@ -70,7 +74,14 @@ const App: React.FC = () => {
         <p className="subtitle">Compare car, ferry, and plane routes in one view</p>
       </header>
 
-      <RouteForm onCalculate={handleCalculateRoute} isLoading={isLoading} />
+      <RouteForm 
+        onCalculate={handleCalculateRoute} 
+        isLoading={isLoading}
+        startInput={startInput}
+        setStartInput={setStartInput}
+        endInput={endInput}
+        setEndInput={setEndInput}
+      />
 
       {error && (
         <div className="error">

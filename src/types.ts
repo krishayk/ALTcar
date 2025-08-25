@@ -68,6 +68,10 @@ export interface RouteMapProps {
 export interface RouteFormProps {
   onCalculate: (start: string, end: string) => void;
   isLoading: boolean;
+  startInput: string;
+  setStartInput: (value: string) => void;
+  endInput: string;
+  setEndInput: (value: string) => void;
 }
 
 export interface ResultsProps {

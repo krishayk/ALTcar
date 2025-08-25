@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import { RouteFormProps } from '../types';
 
-const RouteForm: React.FC<RouteFormProps> = ({ onCalculate, isLoading }) => {
-  const [start, setStart] = useState('');
-  const [end, setEnd] = useState('');
-
+const RouteForm: React.FC<RouteFormProps> = ({ onCalculate, isLoading, startInput, setStartInput, endInput, setEndInput }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (start.trim() && end.trim()) {
-      onCalculate(start.trim(), end.trim());
+    if (startInput.trim() && endInput.trim()) {
+      onCalculate(startInput.trim(), endInput.trim());
     }
   };
 
@@ -21,8 +18,8 @@ const RouteForm: React.FC<RouteFormProps> = ({ onCalculate, isLoading }) => {
             <input
               type="text"
               id="start"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
+              value={startInput}
+              onChange={(e) => setStartInput(e.target.value)}
               placeholder="e.g., 123 Main St, New York, NY"
               required
               disabled={isLoading}
@@ -33,8 +30,8 @@ const RouteForm: React.FC<RouteFormProps> = ({ onCalculate, isLoading }) => {
             <input
               type="text"
               id="end"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
+              value={endInput}
+              onChange={(e) => setEndInput(e.target.value)}
               placeholder="e.g., 456 Oak Ave, Boston, MA"
               required
               disabled={isLoading}

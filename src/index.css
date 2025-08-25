@@ -945,7 +945,7 @@ body {
 
 .route-actions {
   display: flex;
-  gap: 16px;
+  gap: 32px;
   align-items: center;
   margin-top: 12px;
 }
