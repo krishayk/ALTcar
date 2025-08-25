@@ -11,6 +11,12 @@ export interface RouteResponse {
     summary: string;
     startAddress: string;
     endAddress: string;
+    geometry?: {
+      encoded?: string;
+      encoded_polyline?: string;
+      coordinates?: [number, number][];
+      type?: string;
+    };
   };
   cost: {
     fuel: number;
@@ -32,18 +38,25 @@ export interface SavedRoute { // New interface for saved routes
 }
 
 export interface RouteMapProps {
-  route: RouteResponse | null;
+  routes: {
+    car: RouteResponse | null;
+    ferry: RouteResponse | null;
+    plane: RouteResponse | null;
+  } | null;
   isLoading: boolean;
 }
 
 export interface RouteFormProps {
   onCalculate: (start: string, end: string) => void;
   isLoading: boolean;
-  currentRoute: RouteResponse | null; // Added currentRoute
-  transportMode: string; // Added transportMode
 }
 
 export interface ResultsProps {
-  route: RouteResponse | null;
+  routes: {
+    car: RouteResponse | null;
+    ferry: RouteResponse | null;
+    plane: RouteResponse | null;
+  } | null;
   isLoading: boolean;
+  onRouteSaved?: () => void;
 } 

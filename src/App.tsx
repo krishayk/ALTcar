@@ -1,49 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import RouteForm from './components/RouteForm';
 import RouteMap from './components/RouteMap';
 import Results from './components/Results';
+import SavedRoutesViewer from './components/SavedRoutesViewer';
 import { calculateRoute } from './services/routeService';
 import { RouteResponse } from './types';
 
+interface AllRoutes {
+  car: RouteResponse | null;
+  ferry: RouteResponse | null;
+  plane: RouteResponse | null;
+}
+
 const App: React.FC = () => {
-  const [route, setRoute] = useState<RouteResponse | null>(null);
+  const [routes, setRoutes] = useState<AllRoutes>({ car: null, ferry: null, plane: null });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [transportMode, setTransportMode] = useState('car');
+  const [savedRoutes, setSavedRoutes] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Load saved routes on component mount
+    const saved = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
+    setSavedRoutes(saved);
+  }, []);
 
   const handleCalculateRoute = async (start: string, end: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const routeData = await calculateRoute(start, end, transportMode as 'car' | 'ferry' | 'plane');
-      setRoute(routeData);
+      // Calculate all three routes simultaneously
+      const [carRoute, ferryRoute, planeRoute] = await Promise.all([
+        calculateRoute(start, end, 'car'),
+        calculateRoute(start, end, 'ferry'),
+        calculateRoute(start, end, 'plane')
+      ]);
+      
+      setRoutes({
+        car: carRoute,
+        ferry: ferryRoute,
+        plane: planeRoute
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setRoute(null);
+      setRoutes({ car: null, ferry: null, plane: null });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleRouteSaved = () => {
+    // Refresh saved routes after saving
+    const saved = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
+    setSavedRoutes(saved);
+  };
+
+  const hasAnyRoute = routes.car || routes.ferry || routes.plane;
+
   return (
     <div className="app">
       <header className="header">
         <h1>REGENT Alternative Route Calculator</h1>
-        <div className="transport-mode-selector">
-          <select 
-            value={transportMode} 
-            onChange={(e) => setTransportMode(e.target.value)}
-            className="mode-dropdown"
-          >
-            <option value="car">🚗 Car</option>
-            <option value="ferry">⛴️ Ferry</option>
-            <option value="plane">✈️ Plane</option>
-          </select>
-        </div>
+        <p className="subtitle">Compare car, ferry, and plane routes in one view</p>
       </header>
 
-      <RouteForm onCalculate={handleCalculateRoute} isLoading={isLoading} currentRoute={route} transportMode={transportMode} />
+      <RouteForm onCalculate={handleCalculateRoute} isLoading={isLoading} />
 
       {error && (
         <div className="error">
@@ -51,9 +72,22 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <RouteMap route={route} isLoading={isLoading} />
-      
-      <Results route={route} isLoading={isLoading} />
+      {hasAnyRoute && (
+        <>
+          <RouteMap routes={routes} isLoading={isLoading} />
+          <Results routes={routes} isLoading={isLoading} onRouteSaved={handleRouteSaved} />
+        </>
+      )}
+
+      {savedRoutes.length > 0 && (
+        <SavedRoutesViewer 
+          savedRoutes={savedRoutes} 
+          onRouteDeleted={() => {
+            const saved = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
+            setSavedRoutes(saved);
+          }}
+        />
+      )}
     </div>
   );
 };
