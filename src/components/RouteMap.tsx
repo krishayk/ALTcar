@@ -208,7 +208,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         startMarkerElement.style.width = '16px';
         startMarkerElement.style.height = '16px';
         startMarkerElement.style.borderRadius = '50%';
-        startMarkerElement.style.backgroundColor = color;
+        startMarkerElement.style.backgroundColor = '#ef4444'; // Red center
         startMarkerElement.style.border = '2px solid #ffffff';
         startMarkerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
         startMarkerElement.title = 'Ferry Start';
@@ -217,7 +217,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         endMarkerElement.style.width = '16px';
         endMarkerElement.style.height = '16px';
         endMarkerElement.style.borderRadius = '50%';
-        endMarkerElement.style.backgroundColor = color;
+        endMarkerElement.style.backgroundColor = '#ef4444'; // Red center
         endMarkerElement.style.border = '2px solid #ffffff';
         endMarkerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
         endMarkerElement.title = 'Ferry End';
@@ -246,7 +246,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 8,
-            fillColor: color,
+            fillColor: '#ef4444', // Red center
             fillOpacity: 1,
             strokeColor: '#ffffff',
             strokeWeight: 2
@@ -260,7 +260,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 8,
-            fillColor: color,
+            fillColor: '#ef4444', // Red center
             fillOpacity: 1,
             strokeColor: '#ffffff',
             strokeWeight: 2
