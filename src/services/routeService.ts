@@ -64,93 +64,113 @@ function calculateEstimatedFlightCost(distanceMiles: number): number {
   }
 }
 
-// Helper function to calculate realistic plane distance
-function calculatePlaneDistance(startCoords: { lat: number; lng: number }, endCoords: { lat: number; lng: number }): number {
-  // Calculate straight-line distance (as the crow flies) for planes
+// Helper function to calculate great-circle distance using Haversine formula
+const calculateGreatCircleDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const R = 3959; // Earth's radius in miles
-  const dLat = (endCoords.lat - startCoords.lat) * Math.PI / 180;
-  const dLng = (endCoords.lng - startCoords.lng) * Math.PI / 180;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
   const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(startCoords.lat * Math.PI / 180) * Math.cos(endCoords.lat * Math.PI / 180) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-  
-  return Math.round(distance * 10) / 10; // Round to 1 decimal place
-}
+  return R * c;
+};
 
-// Helper function to calculate realistic plane time
-function calculatePlaneTime(distanceMiles: number): number {
-  // Realistic flight times based on distance (including taxi, takeoff, landing)
-  if (distanceMiles <= 100) {
-    // Short domestic (including taxi time)
-    return 75; // 1 hour 15 minutes
-  } else if (distanceMiles <= 300) {
-    // Medium domestic
-    return 120; // 2 hours
-  } else if (distanceMiles <= 500) {
-    // Medium-long domestic
-    return 180; // 3 hours
-  } else if (distanceMiles <= 800) {
-    // Long domestic
-    return 240; // 4 hours
-  } else if (distanceMiles <= 1200) {
-    // Very long domestic
-    return 300; // 5 hours
-  } else if (distanceMiles <= 2000) {
-    // Cross-country
-    return 360; // 6 hours
-  } else if (distanceMiles <= 3000) {
-    // Transcontinental
-    return 420; // 7 hours
-  } else {
-    // International long-haul
-    return 480 + Math.floor((distanceMiles - 3000) / 500) * 60; // 8+ hours
-  }
-}
+// Helper function to convert degrees to radians
+const toRadians = (degrees: number): number => {
+  return degrees * Math.PI / 180;
+};
 
-// Helper function to calculate realistic ferry distance
-function calculateFerryDistance(startCoords: { lat: number; lng: number }, endCoords: { lat: number; lng: number }): number {
-  // Calculate water route distance (slightly longer than straight-line due to water navigation)
-  const R = 3959; // Earth's radius in miles
-  const dLat = (endCoords.lat - startCoords.lat) * Math.PI / 180;
-  const dLng = (endCoords.lng - startCoords.lng) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(startCoords.lat * Math.PI / 180) * Math.cos(endCoords.lat * Math.PI / 180) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const straightLineDistance = R * c;
-  
-  // Add water route factor (ferries don't go straight, they follow water channels)
-  const waterRouteFactor = 1.15; // 15% longer than straight-line
-  const distance = straightLineDistance * waterRouteFactor;
-  
-  return Math.round(distance * 10) / 10; // Round to 1 decimal place
-}
+// Helper function to convert radians to degrees
+const toDegrees = (radians: number): number => {
+  return radians * 180 / Math.PI;
+};
 
-// Helper function to calculate realistic ferry time
-function calculateFerryTime(distanceMiles: number): number {
-  // Realistic ferry times based on distance (ferries are slower than planes)
-  if (distanceMiles <= 5) {
-    // Short crossing (e.g., Seattle-Bainbridge)
-    return 35; // 35 minutes
-  } else if (distanceMiles <= 15) {
-    // Medium crossing (e.g., Seattle-Bremerton)
-    return 60; // 1 hour
-  } else if (distanceMiles <= 30) {
-    // Long crossing (e.g., Seattle-Port Townsend)
-    return 90; // 1.5 hours
-  } else if (distanceMiles <= 50) {
-    // Very long crossing (e.g., Seattle-Victoria BC)
-    return 150; // 2.5 hours
-  } else if (distanceMiles <= 100) {
-    // Extended crossing (e.g., Seattle-San Juan Islands)
-    return 240; // 4 hours
-  } else {
-    // Ultra-long crossing (e.g., Seattle-Alaska)
-    return 300 + Math.floor((distanceMiles - 100) / 50) * 60; // 5+ hours
-  }
-}
+// Realistic plane time and distance calculation using aviation algorithms
+const calculatePlaneDistance = (startLat: number, startLng: number, endLat: number, endLng: number): number => {
+  // Calculate great-circle distance
+  const greatCircleDistance = calculateGreatCircleDistance(startLat, startLng, endLat, endLng);
+  
+  // Route adjustment: Air traffic control, weather systems, and air corridors add 5-10%
+  const routeAdjustmentFactor = 1 + (Math.random() * 0.05 + 0.05); // 5-10% additional distance
+  
+  return Math.round(greatCircleDistance * routeAdjustmentFactor);
+};
+
+const calculatePlaneTime = (distance: number): number => {
+  // Aircraft specifications (average commercial aircraft)
+  const cruisingSpeed = 500; // mph (typical cruising speed)
+  const climbTime = 18; // minutes for takeoff and climb
+  const descentTime = 17; // minutes for descent and landing
+  
+  // Ground time calculations
+  const taxiOutTime = 12; // minutes to taxi from gate to runway
+  const taxiInTime = 8; // minutes to taxi from runway to gate
+  
+  // Wind factor: Headwinds/tailwinds can affect flight time by ±15%
+  const windFactor = 1 + (Math.random() * 0.3 - 0.15); // ±15% time variation
+  
+  // Delay buffer for air traffic control, weather, maintenance (5-20 minutes)
+  const delayBuffer = Math.random() * 15 + 5;
+  
+  // Calculate cruise time
+  const cruiseTime = (distance / cruisingSpeed) * 60; // Convert to minutes
+  
+  // Total flight time
+  const totalTime = Math.round(
+    climbTime + 
+    descentTime + 
+    taxiOutTime + 
+    taxiInTime + 
+    (cruiseTime * windFactor) + 
+    delayBuffer
+  );
+  
+  return totalTime;
+};
+
+// Realistic cruise/ferry time and distance calculation using maritime algorithms
+const calculateFerryDistance = (startLat: number, startLng: number, endLat: number, endLng: number): number => {
+  // Calculate great-circle distance
+  const greatCircleDistance = calculateGreatCircleDistance(startLat, startLng, endLat, endLng);
+  
+  // Maritime route adjustment: Ships follow shipping lanes and avoid obstacles
+  // This adds 15-25% to the great-circle distance
+  const maritimeRouteFactor = 1 + (Math.random() * 0.1 + 0.15); // 15-25% additional distance
+  
+  // Convert to nautical miles for maritime calculations
+  const nauticalMiles = greatCircleDistance * 0.868976; // Convert miles to nautical miles
+  
+  return Math.round(nauticalMiles * maritimeRouteFactor * 1.15078); // Convert back to miles
+};
+
+const calculateFerryTime = (distance: number): number => {
+  // Vessel specifications (average cruise ship/ferry)
+  const cruisingSpeed = 22; // knots (typical cruising speed for modern vessels)
+  
+  // Convert distance back to nautical miles for maritime calculations
+  const nauticalMiles = distance * 0.868976;
+  
+  // Calculate sailing time
+  const sailingTimeHours = nauticalMiles / cruisingSpeed;
+  const sailingTimeMinutes = sailingTimeHours * 60;
+  
+  // Port operations time
+  const departurePreparation = 45; // minutes for departure procedures
+  const arrivalProcedures = 30; // minutes for arrival and docking
+  
+  // Weather and sea conditions factor (can add 10-30% to sailing time)
+  const seaConditionsFactor = 1 + (Math.random() * 0.2 + 0.1); // 10-30% additional time
+  
+  // Total voyage time
+  const totalTime = Math.round(
+    departurePreparation + 
+    arrivalProcedures + 
+    (sailingTimeMinutes * seaConditionsFactor)
+  );
+  
+  return totalTime;
+};
 
 // Polyline decoder function
 function decodePolyline(encoded: string): [number, number][] {
@@ -241,11 +261,11 @@ export const calculateRoute = async (start: string, end: string, transportMode: 
     
     if (transportMode === 'plane') {
       // Use realistic flight distance and time calculations
-      distanceMiles = calculatePlaneDistance(startCoords, endCoords);
+      distanceMiles = calculatePlaneDistance(startCoords.lat, startCoords.lng, endCoords.lat, endCoords.lng);
       durationMinutes = calculatePlaneTime(distanceMiles);
     } else if (transportMode === 'ferry') {
       // Use realistic ferry distance and time calculations
-      distanceMiles = calculateFerryDistance(startCoords, endCoords);
+      distanceMiles = calculateFerryDistance(startCoords.lat, startCoords.lng, endCoords.lat, endCoords.lng);
       durationMinutes = calculateFerryTime(distanceMiles);
     } else {
       // Car route: use actual route data
