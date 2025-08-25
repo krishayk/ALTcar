@@ -59,9 +59,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
 
   // Function to add a route
   const addRoute = (routeData: any, mode: string, color: string) => {
-    if (!routeData || !mapInstanceRef.current) return;
+    if (!routeData || !mapInstanceRef.current) {
+      console.log('addRoute: Missing data or map instance', { routeData: !!routeData, mapInstance: !!mapInstanceRef.current });
+      return;
+    }
 
     const map = mapInstanceRef.current;
+    console.log('Adding route:', mode, routeData);
 
     if (mode === 'plane') {
       // Plane route: straight line from A to B
@@ -325,6 +329,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   useEffect(() => {
     // Redraw the map whenever ferryDirection or curveSize changes
     if (mapInstanceRef.current && routes) {
+      console.log('Redrawing map due to ferry controls change');
+      
       // Clear previous routes completely
       directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
       directionsRendererRefs.current = [];
@@ -335,12 +341,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       markerRefs.current.forEach(marker => marker.map = null);
       markerRefs.current = [];
       
-      // Redraw all routes with new settings
-      if (routes.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
-      if (routes.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
-      if (routes.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
+      // Small delay to ensure clearing is complete
+      setTimeout(() => {
+        // Redraw all routes with new settings
+        if (routes.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
+        if (routes.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
+        if (routes.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
+      }, 50);
     }
-  }, [ferryDirection, curveSize, routes]);
+  }, [ferryDirection, curveSize]);
 
   if (isLoading) {
     return (
