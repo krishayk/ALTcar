@@ -18,7 +18,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const directionsRendererRefs = useRef<google.maps.DirectionsRenderer[]>([]);
   const polylineRefs = useRef<google.maps.Polyline[]>([]);
-  const markerRefs = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const markerRefs = useRef<any[]>([]);
   const [showFerryControls, setShowFerryControls] = useState<boolean>(false);
 
   // Function to initialize the map
@@ -202,40 +202,74 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       // Store reference to polyline for cleanup
       polylineRefs.current.push(ferryRoute);
 
-      // Add markers for start and end points using AdvancedMarkerElement
-      const startMarkerElement = document.createElement('div');
-      startMarkerElement.style.width = '16px';
-      startMarkerElement.style.height = '16px';
-      startMarkerElement.style.borderRadius = '50%';
-      startMarkerElement.style.backgroundColor = color;
-      startMarkerElement.style.border = '2px solid #ffffff';
-      startMarkerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-      startMarkerElement.title = 'Ferry Start';
+      // Add markers for start and end points using AdvancedMarkerElement if available, fallback to regular Marker
+      if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+        const startMarkerElement = document.createElement('div');
+        startMarkerElement.style.width = '16px';
+        startMarkerElement.style.height = '16px';
+        startMarkerElement.style.borderRadius = '50%';
+        startMarkerElement.style.backgroundColor = color;
+        startMarkerElement.style.border = '2px solid #ffffff';
+        startMarkerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        startMarkerElement.title = 'Ferry Start';
 
-      const endMarkerElement = document.createElement('div');
-      endMarkerElement.style.width = '16px';
-      endMarkerElement.style.height = '16px';
-      endMarkerElement.style.borderRadius = '50%';
-      endMarkerElement.style.backgroundColor = color;
-      endMarkerElement.style.border = '2px solid #ffffff';
-      endMarkerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-      endMarkerElement.title = 'Ferry End';
+        const endMarkerElement = document.createElement('div');
+        endMarkerElement.style.width = '16px';
+        endMarkerElement.style.height = '16px';
+        endMarkerElement.style.borderRadius = '50%';
+        endMarkerElement.style.backgroundColor = color;
+        endMarkerElement.style.border = '2px solid #ffffff';
+        endMarkerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        endMarkerElement.title = 'Ferry End';
 
-      const startMarker = new google.maps.marker.AdvancedMarkerElement({
-        position: { lat: coordinates[0][0], lng: coordinates[0][1] },
-        map: map,
-        title: 'Ferry Start',
-        content: startMarkerElement
-      });
+        const startMarker = new google.maps.marker.AdvancedMarkerElement({
+          position: { lat: coordinates[0][0], lng: coordinates[0][1] },
+          map: map,
+          title: 'Ferry Start',
+          content: startMarkerElement
+        });
 
-      const endMarker = new google.maps.marker.AdvancedMarkerElement({
-        position: { lat: coordinates[coordinates.length - 1][0], lng: coordinates[coordinates.length - 1][1] },
-        map: map,
-        title: 'Ferry End',
-        content: endMarkerElement
-      });
+        const endMarker = new google.maps.marker.AdvancedMarkerElement({
+          position: { lat: coordinates[coordinates.length - 1][0], lng: coordinates[coordinates.length - 1][1] },
+          map: map,
+          title: 'Ferry End',
+          content: endMarkerElement
+        });
 
-      markerRefs.current.push(startMarker, endMarker);
+        markerRefs.current.push(startMarker, endMarker);
+      } else {
+        // Fallback to regular markers if AdvancedMarkerElement is not available
+        const startMarker = new google.maps.Marker({
+          position: { lat: coordinates[0][0], lng: coordinates[0][1] },
+          map: map,
+          title: 'Ferry Start',
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: color,
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2
+          }
+        });
+
+        const endMarker = new google.maps.Marker({
+          position: { lat: coordinates[coordinates.length - 1][0], lng: coordinates[coordinates.length - 1][1] },
+          map: map,
+          title: 'Ferry End',
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: color,
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2
+          }
+        });
+
+        // Cast to any to avoid type mismatch for fallback markers
+        markerRefs.current.push(startMarker as any, endMarker as any);
+      }
 
       // Extend bounds to include the entire ferry route
       const bounds = new google.maps.LatLngBounds();
