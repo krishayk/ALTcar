@@ -95,6 +95,20 @@ const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRo
                 
                 {expandedRoute === savedRoute.id && (
                   <div className="saved-route-details">
+                    <div className="map-preview">
+                      <h4>🗺️ Route Map Preview</h4>
+                      <div className="map-placeholder">
+                        <div className="map-route-lines">
+                          <div className="route-line car-line"></div>
+                          <div className="route-line ferry-line"></div>
+                          <div className="route-line plane-line"></div>
+                        </div>
+                        <div className="map-labels">
+                          <span className="map-label start">📍 {savedRoute.startAddress.split(',')[0]}</span>
+                          <span className="map-label end">📍 {savedRoute.endAddress.split(',')[0]}</span>
+                        </div>
+                      </div>
+                    </div>
                     <div className="comparison-table">
                       <table>
                         <thead>

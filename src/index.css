@@ -838,6 +838,20 @@ body {
   transform: translateY(-1px);
 }
 
+.save-all-routes-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  margin-top: 16px;
+}
+
 /* Saved Routes Viewer */
 .saved-routes {
   margin-top: 3rem;
@@ -1017,4 +1031,102 @@ body {
     font-size: 1.1rem;
     min-width: 250px;
   }
+} 
+
+/* Map Preview in Saved Routes */
+.map-preview {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.map-preview h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: center;
+}
+
+.map-placeholder {
+  position: relative;
+  height: 200px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 6px;
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.map-route-lines {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.route-line {
+  position: absolute;
+  height: 3px;
+  border-radius: 2px;
+  opacity: 0.8;
+}
+
+.car-line {
+  width: 60%;
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  top: 40%;
+  left: 20%;
+  transform: rotate(-5deg);
+}
+
+.ferry-line {
+  width: 70%;
+  background: linear-gradient(90deg, #10b981 0%, #047857 100%);
+  top: 50%;
+  left: 15%;
+  transform: rotate(15deg);
+}
+
+.plane-line {
+  width: 50%;
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+  top: 30%;
+  left: 25%;
+  transform: rotate(-10deg);
+}
+
+.map-labels {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.map-label {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.map-label.start {
+  top: 20%;
+  left: 10%;
+}
+
+.map-label.end {
+  bottom: 20%;
+  right: 10%;
 } 
