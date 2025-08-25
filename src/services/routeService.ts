@@ -145,8 +145,8 @@ const calculateFerryDistance = (startLat: number, startLng: number, endLat: numb
 };
 
 const calculateFerryTime = (distance: number): number => {
-  // Vessel specifications (average cruise ship/ferry)
-  const cruisingSpeed = 22; // knots (typical cruising speed for modern vessels)
+  // Vessel specifications (realistic ferry speed)
+  const cruisingSpeed = 35; // knots (modern high-speed ferries can do 30-40 knots)
   
   // Convert distance back to nautical miles for maritime calculations
   const nauticalMiles = distance * 0.868976;
@@ -155,12 +155,12 @@ const calculateFerryTime = (distance: number): number => {
   const sailingTimeHours = nauticalMiles / cruisingSpeed;
   const sailingTimeMinutes = sailingTimeHours * 60;
   
-  // Port operations time
-  const departurePreparation = 45; // minutes for departure procedures
-  const arrivalProcedures = 30; // minutes for arrival and docking
+  // Port operations time (much more realistic for ferries)
+  const departurePreparation = 15; // minutes for departure procedures (ferries are faster than cruise ships)
+  const arrivalProcedures = 10; // minutes for arrival and docking (ferries dock much faster)
   
-  // Weather and sea conditions factor (can add 10-30% to sailing time)
-  const seaConditionsFactor = 1 + (Math.random() * 0.2 + 0.1); // 10-30% additional time
+  // Weather and sea conditions factor (reduced for ferries - they're more reliable)
+  const seaConditionsFactor = 1 + (Math.random() * 0.1 + 0.05); // 5-15% additional time (was 10-30%)
   
   // Total voyage time
   const totalTime = Math.round(
