@@ -18,7 +18,7 @@ interface SavedRoutesViewerProps {
   onViewRoute: (start: string, end: string) => void;
 }
 
-const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRouteDeleted }) => {
+const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRouteDeleted, onViewRoute }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedRoute, setExpandedRoute] = useState<string | null>(null);
 
