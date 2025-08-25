@@ -13,6 +13,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   const directionsRendererRefs = useRef<google.maps.DirectionsRenderer[]>([]);
   const polylineRefs = useRef<google.maps.Polyline[]>([]);
   const markerRefs = useRef<google.maps.Marker[]>([]);
+  const [showFerryControls, setShowFerryControls] = useState<boolean>(false);
 
   useEffect(() => {
     if (!routes || !mapRef.current) return;
@@ -424,30 +425,49 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           <div className="legend-color" style={{ backgroundColor: '#10b981' }}></div>
           <span>⛴️ Ferry Route</span>
           <button 
-            className="ferry-direction-toggle"
-            onClick={() => setFerryDirection(!ferryDirection)}
-            title="Toggle ferry route direction"
+            className="ferry-controls-toggle"
+            onClick={() => setShowFerryControls(!showFerryControls)}
+            title="Toggle ferry controls"
           >
-            {ferryDirection ? '→' : '←'}
+            ⚙️
           </button>
-        </div>
-        <div className="legend-item curve-control">
-          <span>Curve Size:</span>
-          <input
-            type="range"
-            min="1"
-            max="5"
-            step="0.1"
-            value={curveSize}
-            onChange={(e) => setCurveSize(parseFloat(e.target.value))}
-            className="curve-slider"
-            title="Adjust ferry curve width"
-          />
-          <span className="curve-value">{curveSize.toFixed(1)}</span>
         </div>
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#f59e0b' }}></div>
           <span>✈️ Plane Route</span>
+        </div>
+      </div>
+      
+      {/* Collapsible Ferry Controls Panel */}
+      <div className={`ferry-controls-panel ${showFerryControls ? 'open' : ''}`}>
+        <div className="ferry-controls-content">
+          <div className="control-section">
+            <h4>Ferry Direction</h4>
+            <button 
+              className="ferry-direction-toggle"
+              onClick={() => setFerryDirection(!ferryDirection)}
+              title="Toggle ferry route direction"
+            >
+              {ferryDirection ? '→' : '←'}
+            </button>
+          </div>
+          
+          <div className="control-section">
+            <h4>Curve Size</h4>
+            <div className="curve-control">
+              <input
+                type="range"
+                min="1"
+                max="5"
+                step="0.1"
+                value={curveSize}
+                onChange={(e) => setCurveSize(parseFloat(e.target.value))}
+                className="curve-slider"
+                title="Adjust ferry curve width"
+              />
+              <span className="curve-value">{curveSize.toFixed(1)}</span>
+            </div>
+          </div>
         </div>
       </div>
       <div ref={mapRef} className="actual-map"></div>
