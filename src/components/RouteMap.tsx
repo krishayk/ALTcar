@@ -21,6 +21,42 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   const markerRefs = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const [showFerryControls, setShowFerryControls] = useState<boolean>(false);
 
+  // Function to initialize the map
+  const initializeMap = () => {
+    if (!mapRef.current || !routes) return;
+    
+    try {
+      // Initialize the map
+      const map = new google.maps.Map(mapRef.current!, {
+        center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
+        zoom: 10,
+        mapTypeId: 'roadmap', // Use string instead of deprecated MapTypeId.ROADMAP
+        mapTypeControl: true,
+        streetViewControl: false,
+        fullscreenControl: true
+      });
+
+      mapInstanceRef.current = map;
+
+      // Initialize directions service
+      const directionsService = new google.maps.DirectionsService();
+
+      // Clear previous renderers
+      directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
+      directionsRendererRefs.current = [];
+
+      const bounds = new google.maps.LatLngBounds();
+      let routeCount = 0;
+
+      // Add each route with different colors
+      if (routes.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
+      if (routes.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
+      if (routes.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
+    } catch (error) {
+      console.error('Error initializing Google Maps:', error);
+    }
+  };
+
   // Function to add a route
   const addRoute = (routeData: any, mode: string, color: string) => {
     if (!routeData || !mapInstanceRef.current) return;
@@ -242,6 +278,24 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   useEffect(() => {
     if (!routes || !mapRef.current) return;
 
+    // Check if Google Maps API is already loaded
+    if (window.google && window.google.maps) {
+      initializeMap();
+      return;
+    }
+
+    // Check if script is already being loaded
+    if (document.querySelector('script[src*="maps.googleapis.com"]')) {
+      // Wait for existing script to load
+      const checkInterval = setInterval(() => {
+        if (window.google && window.google.maps) {
+          clearInterval(checkInterval);
+          initializeMap();
+        }
+      }, 100);
+      return;
+    }
+
     // Load Google Maps API
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=geometry&loading=async`;
@@ -251,44 +305,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
     script.onload = () => {
       // Add a small delay to ensure API is fully loaded
       setTimeout(() => {
-        // Check if Google Maps API is fully loaded
-        if (typeof google === 'undefined' || !google.maps) {
-          console.error('Google Maps API not fully loaded');
-          return;
+        if (window.google && window.google.maps) {
+          initializeMap();
         }
-
-        try {
-          // Initialize the map
-          const map = new google.maps.Map(mapRef.current!, {
-            center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
-            zoom: 10,
-            mapTypeId: 'roadmap', // Use string instead of deprecated MapTypeId.ROADMAP
-            mapTypeControl: true,
-            streetViewControl: false,
-            fullscreenControl: true
-          });
-
-          mapInstanceRef.current = map;
-
-          // Initialize directions service
-          const directionsService = new google.maps.DirectionsService();
-          // directionsServiceRef.current = directionsService; // This line is removed as per the new_code
-
-          // Clear previous renderers
-          directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
-          directionsRendererRefs.current = [];
-
-          const bounds = new google.maps.LatLngBounds();
-          let routeCount = 0;
-
-          // Add each route with different colors
-          if (routes.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
-          if (routes.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
-          if (routes.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
-        } catch (error) {
-          console.error('Error initializing Google Maps:', error);
-        }
-      }, 100); // 100ms delay to ensure API is fully loaded
+      }, 100);
     };
 
     document.head.appendChild(script);
