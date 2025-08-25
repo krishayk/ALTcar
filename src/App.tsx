@@ -57,6 +57,10 @@ const App: React.FC = () => {
     setSavedRoutes(saved);
   };
 
+  const handleViewRoute = (start: string, end: string) => {
+    handleCalculateRoute(start, end);
+  };
+
   const hasAnyRoute = routes.car || routes.ferry || routes.plane;
 
   return (
@@ -101,6 +105,7 @@ const App: React.FC = () => {
             const saved = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
             setSavedRoutes(saved);
           }}
+          onViewRoute={handleViewRoute}
         />
       )}
     </div>

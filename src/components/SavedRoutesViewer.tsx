@@ -15,6 +15,7 @@ interface SavedRoute {
 interface SavedRoutesViewerProps {
   savedRoutes: SavedRoute[];
   onRouteDeleted: () => void;
+  onViewRoute: (start: string, end: string) => void;
 }
 
 const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRouteDeleted }) => {
@@ -79,6 +80,12 @@ const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRo
                   </div>
                   <div className="route-actions">
                     <button 
+                      className="view-route-btn"
+                      onClick={() => onViewRoute(savedRoute.startAddress, savedRoute.endAddress)}
+                    >
+                      🗺️ View Route
+                    </button>
+                    <button 
                       className="expand-btn"
                       onClick={() => setExpandedRoute(expandedRoute === savedRoute.id ? null : savedRoute.id)}
                     >
@@ -95,20 +102,6 @@ const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRo
                 
                 {expandedRoute === savedRoute.id && (
                   <div className="saved-route-details">
-                    <div className="map-preview">
-                      <h4>🗺️ Route Map Preview</h4>
-                      <div className="map-placeholder">
-                        <div className="map-route-lines">
-                          <div className="route-line car-line"></div>
-                          <div className="route-line ferry-line"></div>
-                          <div className="route-line plane-line"></div>
-                        </div>
-                        <div className="map-labels">
-                          <span className="map-label start">📍 {savedRoute.startAddress.split(',')[0]}</span>
-                          <span className="map-label end">📍 {savedRoute.endAddress.split(',')[0]}</span>
-                        </div>
-                      </div>
-                    </div>
                     <div className="comparison-table">
                       <table>
                         <thead>
