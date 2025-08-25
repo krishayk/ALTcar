@@ -78,8 +78,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           const startMarker = new google.maps.Marker({
             position: { lat: startLat, lng: startLng },
             map: map,
-            title: `PLANE: Start - ${routeData.route.startAddress}`,
-            label: { text: '✈️', fontSize: '18px' }
+            title: `PLANE: Start - ${routeData.route.startAddress}`
           });
           
           // Store reference to start marker
@@ -95,8 +94,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           const midMarker = new google.maps.Marker({
             position: planeMidPoint,
             map: map,
-            title: 'Plane Route',
-            label: { text: '✈️', fontSize: '18px' }
+            title: 'Plane Route'
           });
           
           // Store reference to mid marker
@@ -105,8 +103,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           const endMarker = new google.maps.Marker({
             position: { lat: endLat, lng: endLng },
             map: map,
-            title: `PLANE: End - ${routeData.route.endAddress}`,
-            label: { text: '✈️', fontSize: '18px' }
+            title: `PLANE: End - ${routeData.route.endAddress}`
           });
           
           // Store reference to end marker
@@ -190,8 +187,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           const startMarker = new google.maps.Marker({
             position: { lat: startLat, lng: startLng },
             map: map,
-            title: `FERRY: Start - ${routeData.route.startAddress}`,
-            label: { text: '⛴️', fontSize: '18px' }
+            title: `FERRY: Start - ${routeData.route.startAddress}`
           });
           
           // Store reference to start marker
@@ -210,8 +206,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           const midMarker = new google.maps.Marker({
             position: ferryMidPoint,
             map: map,
-            title: 'Ferry Route (Water)',
-            label: { text: '⛴️', fontSize: '18px' }
+            title: 'Ferry Route (Water)'
           });
           
           // Store reference to mid marker
@@ -220,8 +215,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           const endMarker = new google.maps.Marker({
             position: { lat: endLat, lng: endLng },
             map: map,
-            title: `FERRY: End - ${routeData.route.endAddress}`,
-            label: { text: '⛴️', fontSize: '18px' }
+            title: `FERRY: End - ${routeData.route.endAddress}`
           });
           
           // Store reference to end marker
@@ -261,11 +255,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
               const startMarker = new google.maps.Marker({
                 position: result.routes[0].legs[0].start_location,
                 map: map,
-                title: `${mode.toUpperCase()}: Start - ${routeData.route.startAddress}`,
-                label: {
-                  text: mode === 'car' ? '🚗' : mode === 'ferry' ? '⛴️' : '✈️',
-                  fontSize: '16px'
-                }
+                title: `${mode.toUpperCase()}: Start - ${routeData.route.startAddress}`
               });
               
               // Store reference to start marker
@@ -283,8 +273,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
                 const midMarker = new google.maps.Marker({
                   position: carMidPoint,
                   map: map,
-                  title: 'Car Route',
-                  label: { text: '🚗', fontSize: '18px' }
+                  title: 'Car Route'
                 });
                 
                 // Store reference to mid marker
@@ -294,11 +283,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
               const endMarker = new google.maps.Marker({
                 position: result.routes[0].legs[0].end_location,
                 map: map,
-                title: `${mode.toUpperCase()}: End - ${routeData.route.endAddress}`,
-                label: {
-                  text: mode === 'car' ? '🚗' : mode === 'ferry' ? '⛴️' : '✈️',
-                  fontSize: '16px'
-                }
+                title: `${mode.toUpperCase()}: End - ${routeData.route.endAddress}`
               });
               
               // Store reference to end marker
@@ -397,8 +382,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         new google.maps.Marker({
           position: { lat: startLat, lng: startLng },
           map: map,
-          title: `PLANE: Start - ${routeData.route.startAddress}`,
-          label: { text: '✈️', fontSize: '18px' }
+          title: `PLANE: Start - ${routeData.route.startAddress}`
         });
 
         // Add plane label at the midpoint to prevent overlap - offset slightly
@@ -411,15 +395,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         new google.maps.Marker({
           position: planeMidPoint,
           map: map,
-          title: 'Plane Route',
-          label: { text: '✈️', fontSize: '18px' }
+          title: 'Plane Route'
         });
 
         new google.maps.Marker({
           position: { lat: endLat, lng: endLng },
           map: map,
-          title: `PLANE: End - ${routeData.route.endAddress}`,
-          label: { text: '✈️', fontSize: '18px' }
+          title: `PLANE: End - ${routeData.route.endAddress}`
         });
 
         // Extend bounds
@@ -500,8 +482,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         const startMarker = new google.maps.Marker({
           position: { lat: startLat, lng: startLng },
           map: map,
-          title: `FERRY: Start - ${routeData.route.startAddress}`,
-          label: { text: '⛴️', fontSize: '18px' }
+          title: `FERRY: Start - ${routeData.route.startAddress}`
         });
         
         // Store reference to start marker
@@ -520,8 +501,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         const midMarker = new google.maps.Marker({
           position: ferryMidPoint,
           map: map,
-          title: 'Ferry Route (Water)',
-          label: { text: '⛴️', fontSize: '18px' }
+          title: 'Ferry Route (Water)'
         });
         
         // Store reference to mid marker
@@ -530,8 +510,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         const endMarker = new google.maps.Marker({
           position: { lat: endLat, lng: endLng },
           map: map,
-          title: `FERRY: End - ${routeData.route.endAddress}`,
-          label: { text: '⛴️', fontSize: '18px' }
+          title: `FERRY: End - ${routeData.route.endAddress}`
         });
         
         // Store reference to end marker
@@ -571,11 +550,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
             const startMarker = new google.maps.Marker({
               position: result.routes[0].legs[0].start_location,
               map: map,
-              title: `${mode.toUpperCase()}: Start - ${routeData.route.startAddress}`,
-              label: {
-                text: mode === 'car' ? '🚗' : mode === 'ferry' ? '⛴️' : '✈️',
-                fontSize: '16px'
-              }
+              title: `${mode.toUpperCase()}: Start - ${routeData.route.startAddress}`
             });
             
             // Store reference to start marker
@@ -593,8 +568,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
               const midMarker = new google.maps.Marker({
                 position: carMidPoint,
                 map: map,
-                title: 'Car Route',
-                label: { text: '🚗', fontSize: '18px' }
+                title: 'Car Route'
               });
               
               // Store reference to mid marker
@@ -604,11 +578,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
             const endMarker = new google.maps.Marker({
               position: result.routes[0].legs[0].end_location,
               map: map,
-              title: `${mode.toUpperCase()}: End - ${routeData.route.endAddress}`,
-              label: {
-                text: mode === 'car' ? '🚗' : mode === 'ferry' ? '⛴️' : '✈️',
-                fontSize: '16px'
-              }
+              title: `${mode.toUpperCase()}: End - ${routeData.route.endAddress}`
             });
             
             // Store reference to end marker
