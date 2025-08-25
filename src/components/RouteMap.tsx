@@ -249,15 +249,24 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
     script.defer = true;
     
     script.onload = () => {
-      // Initialize the map
-      const map = new google.maps.Map(mapRef.current!, {
-        center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
-        zoom: 10,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        mapTypeControl: true,
-        streetViewControl: false,
-        fullscreenControl: true
-      });
+      // Add a small delay to ensure API is fully loaded
+      setTimeout(() => {
+        // Check if Google Maps API is fully loaded
+        if (typeof google === 'undefined' || !google.maps) {
+          console.error('Google Maps API not fully loaded');
+          return;
+        }
+
+        try {
+        // Initialize the map
+        const map = new google.maps.Map(mapRef.current!, {
+          center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
+          zoom: 10,
+          mapTypeId: 'roadmap', // Use string instead of deprecated MapTypeId.ROADMAP
+          mapTypeControl: true,
+          streetViewControl: false,
+          fullscreenControl: true
+        });
 
       mapInstanceRef.current = map;
 
@@ -276,6 +285,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       if (routes.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
       if (routes.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
       if (routes.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
+        } catch (error) {
+          console.error('Error initializing Google Maps:', error);
+        }
+      }, 100); // 100ms delay to ensure API is fully loaded
     };
 
     document.head.appendChild(script);
