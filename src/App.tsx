@@ -18,7 +18,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<any[]>([]);
   const [ferryDirection, setFerryDirection] = useState<boolean>(true); // true = left, false = right
-  const [curveSize, setCurveSize] = useState<number>(2.5); // Controls the width of the ferry curve
+  const [curveSize, setCurveSize] = useState<number>(5); // Controls the width of the ferry curve
 
   useEffect(() => {
     // Load saved routes on component mount
