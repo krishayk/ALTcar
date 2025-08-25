@@ -65,17 +65,17 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       // Start and end at same points as car route, but curve in perfect semicircle
       const controlPoint1 = {
         lat: startLat + (endLat - startLat) * 0.25,
-        lng: startLng + (endLng - startLng) * (ferryDirection ? -curveSize * 0.7 : curveSize * 0.7)  // Left or right based on direction
+        lng: startLng + (endLng - startLng) * (ferryDirection ? -(curveSize * 0.5) * 0.7 : (curveSize * 0.5) * 0.7)  // Left or right based on direction
       };
       
       const controlPoint2 = {
         lat: midLat, // Exactly at the midpoint
-        lng: midLng + (endLng - startLng) * (ferryDirection ? -curveSize : curveSize)   // Deepest point at exact center
+        lng: midLng + (endLng - startLng) * (ferryDirection ? -(curveSize * 0.5) : (curveSize * 0.5))   // Deepest point at exact center
       };
       
       const controlPoint3 = {
         lat: startLat + (endLat - startLat) * 0.75,
-        lng: startLng + (endLng - startLng) * (ferryDirection ? -curveSize * 0.7 : curveSize * 0.7)  // Left or right based on direction
+        lng: startLng + (endLng - startLng) * (ferryDirection ? -(curveSize * 0.5) * 0.7 : (curveSize * 0.5) * 0.7)  // Left or right based on direction
       };
       
       // Generate smooth Bezier curve points
@@ -308,8 +308,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
               <input
                 type="range"
                 min="1"
-                max="5"
-                step="0.1"
+                max="10"
+                step="1"
                 value={curveSize}
                 onChange={(e) => setCurveSize(parseFloat(e.target.value))}
                 className="curve-slider"
