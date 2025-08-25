@@ -74,41 +74,6 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           // Store reference to polyline for cleanup
           polylineRefs.current.push(planeRoute);
 
-          // Add markers for plane route at different positions to prevent overlap
-          const startMarker = new google.maps.Marker({
-            position: { lat: startLat, lng: startLng },
-            map: map,
-            title: `PLANE: Start - ${routeData.route.startAddress}`
-          });
-          
-          // Store reference to start marker
-          markerRefs.current.push(startMarker);
-
-          // Add plane label at the midpoint to prevent overlap - offset slightly
-          const midLat = (startLat + endLat) / 2;
-          const midLng = (startLng + endLng) / 2;
-          const planeMidPoint = { 
-            lat: midLat + (endLat - startLat) * 0.1, 
-            lng: midLng + (endLng - startLng) * 0.1 
-          };
-          const midMarker = new google.maps.Marker({
-            position: planeMidPoint,
-            map: map,
-            title: 'Plane Route'
-          });
-          
-          // Store reference to mid marker
-          markerRefs.current.push(midMarker);
-
-          const endMarker = new google.maps.Marker({
-            position: { lat: endLat, lng: endLng },
-            map: map,
-            title: `PLANE: End - ${routeData.route.endAddress}`
-          });
-          
-          // Store reference to end marker
-          markerRefs.current.push(endMarker);
-
           // Extend bounds
           bounds.extend(new google.maps.LatLng(startLat, startLng));
           bounds.extend(new google.maps.LatLng(endLat, endLng));
@@ -183,44 +148,6 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           // Store reference to polyline for cleanup
           polylineRefs.current.push(ferryRoute);
 
-          // Add markers for ferry route at same start/end points as car route
-          const startMarker = new google.maps.Marker({
-            position: { lat: startLat, lng: startLng },
-            map: map,
-            title: `FERRY: Start - ${routeData.route.startAddress}`
-          });
-          
-          // Store reference to start marker
-          markerRefs.current.push(startMarker);
-
-          // Add ferry label at a point on the actual ferry path (not control point)
-          // Calculate a point at 50% along the ferry curve for the label
-          const ferryMidPoint = generateBezierCurve(
-            { lat: startLat, lng: startLng },
-            controlPoint1,
-            controlPoint2,
-            { lat: endLat, lng: endLng },
-            50  // Get all 50 points
-          )[25]; // Take the 25th point (50% along the curve)
-          
-          const midMarker = new google.maps.Marker({
-            position: ferryMidPoint,
-            map: map,
-            title: 'Ferry Route (Water)'
-          });
-          
-          // Store reference to mid marker
-          markerRefs.current.push(midMarker);
-
-          const endMarker = new google.maps.Marker({
-            position: { lat: endLat, lng: endLng },
-            map: map,
-            title: `FERRY: End - ${routeData.route.endAddress}`
-          });
-          
-          // Store reference to end marker
-          markerRefs.current.push(endMarker);
-
           // Extend bounds to include the entire ferry route
           bounds.extend(new google.maps.LatLng(startLat, startLng));
           bounds.extend(new google.maps.LatLng(endLat, endLng));
@@ -251,44 +178,6 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
             if (status === 'OK' && result) {
               directionsRenderer.setDirections(result);
               
-              // Add custom markers at different positions to prevent overlap
-              const startMarker = new google.maps.Marker({
-                position: result.routes[0].legs[0].start_location,
-                map: map,
-                title: `${mode.toUpperCase()}: Start - ${routeData.route.startAddress}`
-              });
-              
-              // Store reference to start marker
-              markerRefs.current.push(startMarker);
-
-              // Add car label at the middle of the route to prevent overlap - offset to prevent overlap
-              const routePath = result.routes[0].overview_path;
-              if (routePath && routePath.length > 0) {
-                const midPoint = routePath[Math.floor(routePath.length / 2)];
-                // Offset the car label slightly to prevent overlap with other routes
-                const carMidPoint = {
-                  lat: midPoint.lat() + (routeData.route.coordinates[1][0] - routeData.route.coordinates[0][0]) * 0.05,
-                  lng: midPoint.lng() + (routeData.route.coordinates[1][1] - routeData.route.coordinates[0][1]) * 0.05
-                };
-                const midMarker = new google.maps.Marker({
-                  position: carMidPoint,
-                  map: map,
-                  title: 'Car Route'
-                });
-                
-                // Store reference to mid marker
-                markerRefs.current.push(midMarker);
-              }
-
-              const endMarker = new google.maps.Marker({
-                position: result.routes[0].legs[0].end_location,
-                map: map,
-                title: `${mode.toUpperCase()}: End - ${routeData.route.endAddress}`
-              });
-              
-              // Store reference to end marker
-              markerRefs.current.push(endMarker);
-
               // Extend bounds
               result.routes[0].legs.forEach(leg => {
                 bounds.extend(leg.start_location);
@@ -378,32 +267,6 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           map: map
         });
 
-        // Add markers for plane route at different positions to prevent overlap
-        new google.maps.Marker({
-          position: { lat: startLat, lng: startLng },
-          map: map,
-          title: `PLANE: Start - ${routeData.route.startAddress}`
-        });
-
-        // Add plane label at the midpoint to prevent overlap - offset slightly
-        const midLat = (startLat + endLat) / 2;
-        const midLng = (startLng + endLng) / 2;
-        const planeMidPoint = { 
-          lat: midLat + (endLat - startLat) * 0.1, 
-          lng: midLng + (endLng - startLng) * 0.1 
-        };
-        new google.maps.Marker({
-          position: planeMidPoint,
-          map: map,
-          title: 'Plane Route'
-        });
-
-        new google.maps.Marker({
-          position: { lat: endLat, lng: endLng },
-          map: map,
-          title: `PLANE: End - ${routeData.route.endAddress}`
-        });
-
         // Extend bounds
         bounds.extend(new google.maps.LatLng(startLat, startLng));
         bounds.extend(new google.maps.LatLng(endLat, endLng));
@@ -475,47 +338,6 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           map: map
         });
         
-        // Store reference to polyline for cleanup
-        polylineRefs.current.push(ferryRoute);
-
-        // Add markers for ferry route at same start/end points as car route
-        const startMarker = new google.maps.Marker({
-          position: { lat: startLat, lng: startLng },
-          map: map,
-          title: `FERRY: Start - ${routeData.route.startAddress}`
-        });
-        
-        // Store reference to start marker
-        markerRefs.current.push(startMarker);
-
-        // Add ferry label at a point on the actual ferry path (not control point)
-        // Calculate a point at 50% along the ferry curve for the label
-        const ferryMidPoint = generateBezierCurve(
-          { lat: startLat, lng: startLng },
-          controlPoint1,
-          controlPoint2,
-          { lat: endLat, lng: endLng },
-          50  // Get all 50 points
-        )[25]; // Take the 25th point (50% along the curve)
-        
-        const midMarker = new google.maps.Marker({
-          position: ferryMidPoint,
-          map: map,
-          title: 'Ferry Route (Water)'
-        });
-        
-        // Store reference to mid marker
-        markerRefs.current.push(midMarker);
-
-        const endMarker = new google.maps.Marker({
-          position: { lat: endLat, lng: endLng },
-          map: map,
-          title: `FERRY: End - ${routeData.route.endAddress}`
-        });
-        
-        // Store reference to end marker
-        markerRefs.current.push(endMarker);
-
         // Extend bounds to include the entire ferry route
         bounds.extend(new google.maps.LatLng(startLat, startLng));
         bounds.extend(new google.maps.LatLng(endLat, endLng));
@@ -546,44 +368,6 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           if (status === 'OK' && result) {
             directionsRenderer.setDirections(result);
             
-            // Add custom markers at different positions to prevent overlap
-            const startMarker = new google.maps.Marker({
-              position: result.routes[0].legs[0].start_location,
-              map: map,
-              title: `${mode.toUpperCase()}: Start - ${routeData.route.startAddress}`
-            });
-            
-            // Store reference to start marker
-            markerRefs.current.push(startMarker);
-
-            // Add car label at the middle of the route to prevent overlap - offset to prevent overlap
-            const routePath = result.routes[0].overview_path;
-            if (routePath && routePath.length > 0) {
-              const midPoint = routePath[Math.floor(routePath.length / 2)];
-              // Offset the car label slightly to prevent overlap with other routes
-              const carMidPoint = {
-                lat: midPoint.lat() + (routeData.route.coordinates[1][0] - routeData.route.coordinates[0][0]) * 0.05,
-                lng: midPoint.lng() + (routeData.route.coordinates[1][1] - routeData.route.coordinates[0][1]) * 0.05
-              };
-              const midMarker = new google.maps.Marker({
-                position: carMidPoint,
-                map: map,
-                title: 'Car Route'
-              });
-              
-              // Store reference to mid marker
-              markerRefs.current.push(midMarker);
-            }
-
-            const endMarker = new google.maps.Marker({
-              position: result.routes[0].legs[0].end_location,
-              map: map,
-              title: `${mode.toUpperCase()}: End - ${routeData.route.endAddress}`
-            });
-            
-            // Store reference to end marker
-            markerRefs.current.push(endMarker);
-
             // Extend bounds
             result.routes[0].legs.forEach(leg => {
               bounds.extend(leg.start_location);
