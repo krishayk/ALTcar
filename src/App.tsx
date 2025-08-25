@@ -18,7 +18,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<any[]>([]);
   const [ferryDirection, setFerryDirection] = useState<boolean>(true); // true = left, false = right
-  const [curveSize, setCurveSize] = useState<number>(5); // Controls the width of the ferry curve
+  const [curveSize, setCurveSize] = useState<number>(5); // Controls the width of the ferry curve (default 5/10)
   const [startInput, setStartInput] = useState<string>('');
   const [endInput, setEndInput] = useState<string>('');
 

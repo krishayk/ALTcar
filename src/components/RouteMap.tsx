@@ -51,61 +51,98 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       map.fitBounds(bounds);
 
     } else if (mode === 'ferry') {
-      // Ferry route: same start/end points but wide water path to avoid overlap
-      const startLat = routeData.route.coordinates[0][0];
-      const startLng = routeData.route.coordinates[0][1];
-      const endLat = routeData.route.coordinates[1][0];
-      const endLng = routeData.route.coordinates[1][1];
+      // Ferry route: use all coordinates from the route data with enhanced curve
+      const coordinates = routeData.route.coordinates;
+      if (coordinates.length < 2) return;
       
-      // Calculate midpoint
-      const midLat = (startLat + endLat) / 2;
-      const midLng = (startLng + endLng) / 2;
+      // Create a curved path that follows the ferry route coordinates
+      const ferryPath: { lat: number; lng: number }[] = [];
       
-      // Create control points for a perfect semicircle
-      // Start and end at same points as car route, but curve in perfect semicircle
-      const controlPoint1 = {
-        lat: startLat + (endLat - startLat) * 0.25,
-        lng: startLng + (endLng - startLng) * (ferryDirection ? -(curveSize * 0.2) * 0.7 : (curveSize * 0.2) * 0.7)  // Left or right based on direction
-      };
+      // Add the start point
+      ferryPath.push({ lat: coordinates[0][0], lng: coordinates[0][1] });
       
-      const controlPoint2 = {
-        lat: midLat, // Exactly at the midpoint
-        lng: midLng + (endLng - startLng) * (ferryDirection ? -(curveSize * 0.2) : (curveSize * 0.2))   // Deepest point at exact center
-      };
-      
-      const controlPoint3 = {
-        lat: startLat + (endLat - startLat) * 0.75,
-        lng: startLng + (endLng - startLng) * (ferryDirection ? -(curveSize * 0.2) * 0.7 : (curveSize * 0.2) * 0.7)  // Left or right based on direction
-      };
-      
-      // Generate smooth Bezier curve points
-      const generateBezierCurve = (p0: any, p1: any, p2: any, p3: any, steps: number) => {
-        const curve = [];
-        for (let i = 0; i <= steps; i++) {
-          const t = i / steps;
-          const u = 1 - t;
-          const tt = t * t;
-          const uu = u * u;
-          const uuu = uu * u;
-          const ttt = tt * t;
+      // Create a smooth Bezier curve for the ferry route
+      if (coordinates.length >= 2) {
+        const startPoint = { lat: coordinates[0][0], lng: coordinates[0][1] };
+        const endPoint = { lat: coordinates[coordinates.length - 1][0], lng: coordinates[coordinates.length - 1][1] };
+        
+        // Calculate the midpoint
+        const midLat = (startPoint.lat + endPoint.lat) / 2;
+        const midLng = (startPoint.lng + endPoint.lng) / 2;
+        
+        // Create control points for a smooth Bezier curve
+        const baseCurveOffset = 0.2; // Much wider base curve
+        // Adjust curve multiplier so that 5/10 produces the same curve as previous 8/20
+        const curveMultiplier = curveSize * 0.205; // Adjusted so that 5/10 = previous 8/20
+        const totalCurveOffset = (baseCurveOffset + curveMultiplier) * (ferryDirection ? -1 : 1);
+        
+        // Calculate perpendicular direction for natural curve
+        const dx = endPoint.lng - startPoint.lng;
+        const dy = endPoint.lat - startPoint.lat;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        
+        let controlPoint1, controlPoint2;
+        
+        if (length > 0) {
+          // Perpendicular vector for natural curve
+          const perpLat = -dy / length;
+          const perpLng = dx / length;
           
-          // Cubic Bezier formula: B(t) = (1-t)³P₀ + 3(1-t)²tP₁ + 3(1-t)t²P₂ + t³P₃
-          const lat = uuu * p0.lat + 3 * uu * t * p1.lat + 3 * u * tt * p2.lat + ttt * p3.lat;
-          const lng = uuu * p0.lng + 3 * uu * t * p1.lng + 3 * u * tt * p2.lng + ttt * p3.lng;
+          // First control point (25% along the route)
+          controlPoint1 = {
+            lat: startPoint.lat + (endPoint.lat - startPoint.lat) * 0.25 + perpLat * totalCurveOffset,
+            lng: startPoint.lng + (endPoint.lng - startPoint.lng) * 0.25 + perpLng * totalCurveOffset
+          };
           
-          curve.push({ lat, lng });
+          // Second control point (75% along the route)
+          controlPoint2 = {
+            lat: startPoint.lat + (endPoint.lat - startPoint.lat) * 0.75 + perpLat * totalCurveOffset,
+            lng: startPoint.lng + (endPoint.lng - startPoint.lng) * 0.75 + perpLng * totalCurveOffset
+          };
+        } else {
+          // Fallback if points are too close
+          controlPoint1 = {
+            lat: midLat + totalCurveOffset,
+            lng: midLng + totalCurveOffset
+          };
+          controlPoint2 = {
+            lat: midLat + totalCurveOffset,
+            lng: midLng + totalCurveOffset
+          };
         }
-        return curve;
-      };
-      
-      // Generate the smooth Bezier curve using same start/end points as car route
-      const ferryPath = generateBezierCurve(
-        { lat: startLat, lng: startLng },           // Same start as car route
-        controlPoint1,                               // Control point 1
-        controlPoint2,                               // Control point 2
-        { lat: endLat, lng: endLng },               // Same end as car route
-        50                                           // Number of curve points
-      );
+        
+        // Generate smooth Bezier curve points
+        const generateBezierCurve = (p0: any, p1: any, p2: any, p3: any, steps: number) => {
+          const curve = [];
+          for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            const u = 1 - t;
+            const tt = t * t;
+            const uu = u * u;
+            const uuu = uu * u;
+            const ttt = tt * t;
+            
+            // Cubic Bezier formula: B(t) = (1-t)³P₀ + 3(1-t)²tP₁ + 3(1-t)t²P₂ + t³P₃
+            const lat = uuu * p0.lat + 3 * uu * t * p1.lat + 3 * u * tt * p2.lat + ttt * p3.lat;
+            const lng = uuu * p0.lng + 3 * uu * t * p1.lng + 3 * u * tt * p2.lng + ttt * p3.lng;
+            
+            curve.push({ lat, lng });
+          }
+          return curve;
+        };
+        
+        // Generate the smooth Bezier curve
+        const bezierPoints = generateBezierCurve(
+          startPoint,           // Start point
+          controlPoint1,        // First control point
+          controlPoint2,        // Second control point
+          endPoint,             // End point
+          100                   // More points for smoother curve
+        );
+        
+        // Add all Bezier curve points to the ferry path
+        bezierPoints.forEach(point => ferryPath.push(point));
+      }
 
       const ferryRoute = new google.maps.Polyline({
         path: ferryPath,
@@ -119,10 +156,40 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       // Store reference to polyline for cleanup
       polylineRefs.current.push(ferryRoute);
 
-      // Extend bounds
+      // Add markers for start and end points
+      const startMarker = new google.maps.Marker({
+        position: { lat: coordinates[0][0], lng: coordinates[0][1] },
+        map: map,
+        title: 'Ferry Start',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: color,
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2
+        }
+      });
+
+      const endMarker = new google.maps.Marker({
+        position: { lat: coordinates[coordinates.length - 1][0], lng: coordinates[coordinates.length - 1][1] },
+        map: map,
+        title: 'Ferry End',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: color,
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2
+        }
+      });
+
+      markerRefs.current.push(startMarker, endMarker);
+
+      // Extend bounds to include the entire ferry route
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend(new google.maps.LatLng(startLat, startLng));
-      bounds.extend(new google.maps.LatLng(endLat, endLng));
+      ferryPath.forEach(point => bounds.extend(new google.maps.LatLng(point.lat, point.lng)));
       map.fitBounds(bounds);
 
     } else if (mode === 'car') {
