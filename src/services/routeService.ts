@@ -255,22 +255,35 @@ export const calculateRoute = async (start: string, end: string, transportMode: 
     console.log('OpenRoute API response:', response.data);
     console.log('Route geometry:', route.geometry);
     
-    // Calculate route data based on transport mode
+    // For all transport modes, use the same start and end coordinates
+    const coordinates = route.geometry.coordinates;
+    const startCoordsForRoute = { lat: coordinates[0][0], lng: coordinates[0][1] };
+    const endCoordsForRoute = { lat: coordinates[coordinates.length - 1][0], lng: coordinates[coordinates.length - 1][1] };
+    
     let distanceMiles: number;
     let durationMinutes: number;
+    let finalCoordinates: [number, number][];
     
     if (transportMode === 'plane') {
       // Use realistic flight distance and time calculations
-      distanceMiles = calculatePlaneDistance(startCoords.lat, startCoords.lng, endCoords.lat, endCoords.lng);
+      distanceMiles = calculatePlaneDistance(startCoordsForRoute.lat, startCoordsForRoute.lng, endCoordsForRoute.lat, endCoordsForRoute.lng);
       durationMinutes = calculatePlaneTime(distanceMiles);
+      finalCoordinates = coordinates;
     } else if (transportMode === 'ferry') {
       // Use realistic ferry distance and time calculations
-      distanceMiles = calculateFerryDistance(startCoords.lat, startCoords.lng, endCoords.lat, endCoords.lng);
+      distanceMiles = calculateFerryDistance(startCoordsForRoute.lat, startCoordsForRoute.lng, endCoordsForRoute.lat, endCoordsForRoute.lng);
       durationMinutes = calculateFerryTime(distanceMiles);
+      finalCoordinates = coordinates;
     } else {
-      // Car route: use actual route data
+      // Car route: use actual route data but ensure endpoints match
       distanceMiles = Math.round(summary.distance * 0.000621371); // Convert meters to miles
       durationMinutes = Math.round(summary.duration / 60); // Convert seconds to minutes
+      
+      // Ensure car route uses the same start/end coordinates for consistency
+      finalCoordinates = [
+        [startCoordsForRoute.lat, startCoordsForRoute.lng],
+        [endCoordsForRoute.lat, endCoordsForRoute.lng]
+      ];
     }
 
     // Calculate costs
@@ -288,20 +301,19 @@ export const calculateRoute = async (start: string, end: string, transportMode: 
     }
 
     // Extract coordinates from the route geometry
-    let coordinates: [number, number][] = [];
     if (route.geometry && route.geometry.coordinates) {
       // OpenRoute returns coordinates as [lng, lat] arrays, we need [lat, lng]
-      coordinates = route.geometry.coordinates.map((coord: [number, number]) => [coord[1], coord[0]]);
+      finalCoordinates = route.geometry.coordinates.map((coord: [number, number]) => [coord[1], coord[0]]);
     } else if (route.geometry && route.geometry.type === 'LineString' && route.geometry.coordinates) {
       // Handle GeoJSON LineString format
-      coordinates = route.geometry.coordinates.map((coord: [number, number]) => [coord[1], coord[0]]);
+      finalCoordinates = route.geometry.coordinates.map((coord: [number, number]) => [coord[1], coord[0]]);
     } else if (route.geometry && route.geometry.encoded) {
       // Handle encoded polyline format - this gives us the actual driving route!
       const decodedCoords = decodePolyline(route.geometry.encoded);
-      coordinates = decodedCoords.map((coord: [number, number]) => [coord[0], coord[1]]);
+      finalCoordinates = decodedCoords.map((coord: [number, number]) => [coord[0], coord[1]]);
     } else {
       // Fallback to start and end coordinates if no route geometry
-      coordinates = [
+      finalCoordinates = [
         [startCoords.lat, startCoords.lng],
         [endCoords.lat, endCoords.lng]
       ];
@@ -311,7 +323,7 @@ export const calculateRoute = async (start: string, end: string, transportMode: 
       distance: distanceMiles,
       duration: durationMinutes,
       route: {
-        coordinates,
+        coordinates: finalCoordinates,
         summary: `Route from ${start} to ${end}`,
         startAddress: start,
         endAddress: end,

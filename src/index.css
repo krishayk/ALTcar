@@ -803,19 +803,19 @@ body {
 
 
 .save-routes-btn {
-  padding: 1.5rem 5rem;
+  padding: 1rem 3rem;
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 1.3rem;
-  font-weight: 700;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  min-width: 300px;
+  min-width: 200px;
 }
 
 .save-routes-btn:hover {
