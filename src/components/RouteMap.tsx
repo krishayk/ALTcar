@@ -225,11 +225,6 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       markerRefs.current.forEach(marker => marker.setMap(null));
       markerRefs.current = [];
       
-      // Clear the map container
-      if (mapRef.current) {
-        mapRef.current.innerHTML = '';
-      }
-      
       // Redraw all routes with new settings
       if (routes.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
       if (routes.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
