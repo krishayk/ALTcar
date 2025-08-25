@@ -556,7 +556,7 @@ body {
 }
 
 .ferry-controls-panel {
-  position: absolute;
+  position: fixed;
   top: 20px;
   right: -300px;
   width: 280px;
@@ -571,6 +571,50 @@ body {
 
 .ferry-controls-panel.open {
   right: 20px;
+}
+
+.ferry-controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ferry-controls-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ferry-controls-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ferry-controls-close:hover {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.ferry-controls-close:active {
+  background-color: #e2e8f0;
+  transform: scale(0.95);
 }
 
 .ferry-controls-content {
