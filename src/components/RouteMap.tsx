@@ -26,6 +26,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
     plane: true
   });
   const [useMetric, setUseMetric] = useState<boolean>(false);
+  const [isDrawingRoutes, setIsDrawingRoutes] = useState<boolean>(false);
 
   // Function to initialize the map
   const initializeMap = () => {
@@ -65,11 +66,16 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
 
   // Function to add a route
   const addRoute = (routeData: any, mode: string, color: string) => {
-    if (!routeData || !mapInstanceRef.current) {
-      console.log('addRoute: Missing data or map instance', { routeData: !!routeData, mapInstance: !!mapInstanceRef.current });
+    if (!routeData || !mapInstanceRef.current || isDrawingRoutes) {
+      console.log('addRoute: Missing data, map instance, or already drawing', { 
+        routeData: !!routeData, 
+        mapInstance: !!mapInstanceRef.current, 
+        isDrawing: isDrawingRoutes 
+      });
       return;
     }
-
+    
+    setIsDrawingRoutes(true);
     const map = mapInstanceRef.current;
     console.log('Adding route:', mode, routeData);
 
@@ -317,6 +323,11 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         }
       });
     }
+    
+    // Reset the drawing flag after a short delay to allow all routes to be processed
+    setTimeout(() => {
+      setIsDrawingRoutes(false);
+    }, 100);
   };
 
   useEffect(() => {

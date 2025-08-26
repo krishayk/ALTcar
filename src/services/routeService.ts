@@ -365,21 +365,38 @@ function geocodeAddress(address: string): Promise<{ lat: number; lng: number }> 
         'st louis': { lat: 38.6270, lng: -90.1994 },
         'cincinnati': { lat: 39.1031, lng: -84.5120 },
         'pittsburgh': { lat: 40.4406, lng: -79.9959 },
-        'anchorage': { lat: 61.2181, lng: -149.9003 }
+        'anchorage': { lat: 61.2181, lng: -149.9003 },
+        'livermore': { lat: 37.6819, lng: -121.7680 },
+        'dublin': { lat: 37.7021, lng: -121.9358 },
+        'sfo': { lat: 37.6213, lng: -122.3790 },
+        'lax': { lat: 33.9416, lng: -118.4085 },
+        'san francisco airport': { lat: 37.6213, lng: -122.3790 },
+        'los angeles airport': { lat: 33.9416, lng: -118.4085 }
       };
 
       // Normalize the address for matching
       const normalizedAddress = address.toLowerCase().trim();
       
-      // Try to find an exact match first
+      // Try to find a city match (more flexible matching)
       for (const [city, coords] of Object.entries(cityCoordinates)) {
-        if (normalizedAddress.includes(city)) {
+        if (normalizedAddress.includes(city) || city.includes(normalizedAddress.split(',')[0])) {
           resolve(coords);
           return;
         }
       }
       
-      // If no exact match, return NYC coordinates as default
+      // Try to extract city from address and match
+      const addressParts = normalizedAddress.split(',').map(part => part.trim());
+      for (const part of addressParts) {
+        for (const [city, coords] of Object.entries(cityCoordinates)) {
+          if (part.includes(city) || city.includes(part)) {
+            resolve(coords);
+            return;
+          }
+        }
+      }
+      
+      // If no match, return NYC coordinates as default
       console.warn(`No coordinates found for "${address}", using NYC as default`);
       resolve({ lat: 40.7128, lng: -74.0060 });
     }, 100);
