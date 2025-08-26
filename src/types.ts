@@ -87,4 +87,5 @@ export interface ResultsProps {
   ferryDirection: boolean;
   curveSize: number;
   useMetric: boolean;
+  setUseMetric: (useMetric: boolean) => void;
 } 

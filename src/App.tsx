@@ -109,6 +109,7 @@ const App: React.FC = () => {
             ferryDirection={ferryDirection}
             curveSize={curveSize}
             useMetric={useMetric}
+            setUseMetric={setUseMetric}
           />
         </>
       )}

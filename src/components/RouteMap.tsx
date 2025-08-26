@@ -501,19 +501,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         </div>
       </div>
       
-      {/* Unit Toggle */}
-      <div className="unit-toggle-container">
-        <span>Units:</span>
-        <label className="unit-toggle">
-          <input
-            type="checkbox"
-            checked={useMetric}
-            onChange={(e) => setUseMetric(e.target.checked)}
-          />
-          <span className="toggle-slider"></span>
-          <span className="unit-label">{useMetric ? 'km' : 'mi'}</span>
-        </label>
-      </div>
+
       
       <div ref={mapRef} className="actual-map"></div>
     </div>

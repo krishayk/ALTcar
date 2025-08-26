@@ -1,7 +1,7 @@
 import React from 'react';
 import { ResultsProps } from '../types';
 
-const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferryDirection, curveSize, useMetric }) => {
+const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferryDirection, curveSize, useMetric, setUseMetric }) => {
   const saveRoutes = () => {
     if (!routes) return;
     
@@ -80,29 +80,23 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
     <div className="results">
       <div className="results-header">
         <h2>Route Comparison</h2>
-        <div className="unit-toggle-container">
-          <span>Units:</span>
-          <label className="unit-toggle">
-            <input
-              type="checkbox"
-              checked={useMetric}
-              onChange={(e) => {
-                // This will be handled by the parent component
-                // We need to add a callback prop for this
-              }}
-              disabled
-            />
-            <span className="toggle-slider"></span>
-            <span className="unit-label">{useMetric ? 'km' : 'mi'}</span>
-          </label>
-        </div>
       </div>
       <div className="comparison-table">
         <table>
           <thead>
             <tr>
               <th>Transport Mode</th>
-              <th>Distance</th>
+              <th>
+                Distance
+                <select 
+                  className="unit-dropdown"
+                  value={useMetric ? 'km' : 'mi'}
+                  onChange={(e) => setUseMetric(e.target.value === 'km')}
+                >
+                  <option value="mi">mi</option>
+                  <option value="km">km</option>
+                </select>
+              </th>
               <th>Duration</th>
               <th>Total Cost</th>
             </tr>

@@ -158,6 +158,26 @@ body {
   margin: 0;
 }
 
+.unit-dropdown {
+  margin-left: 8px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+
+.unit-dropdown:hover {
+  border-color: #007bff;
+}
+
+.unit-dropdown:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
 .result-card {
   text-align: center;
   padding: 15px;
