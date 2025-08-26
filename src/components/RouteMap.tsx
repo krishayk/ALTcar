@@ -20,6 +20,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   const polylineRefs = useRef<google.maps.Polyline[]>([]);
   const markerRefs = useRef<any[]>([]);
   const [showFerryControls, setShowFerryControls] = useState<boolean>(false);
+  const [routeToggles, setRouteToggles] = useState({
+    car: true,
+    ferry: true,
+    plane: true
+  });
+  const [useMetric, setUseMetric] = useState<boolean>(false);
 
   // Function to initialize the map
   const initializeMap = () => {
@@ -48,10 +54,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       const bounds = new google.maps.LatLngBounds();
       let routeCount = 0;
 
-      // Add each route with different colors
-      if (routes.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
-      if (routes.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
-      if (routes.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
+      // Add each route with different colors (only if toggled on)
+      if (routes.car && routeToggles.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
+      if (routes.ferry && routeToggles.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
+      if (routes.plane && routeToggles.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
     } catch (error) {
       console.error('Error initializing Google Maps:', error);
     }
@@ -361,9 +367,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   }, [routes]);
 
   useEffect(() => {
-    // Redraw the map whenever ferryDirection or curveSize changes
+    // Redraw the map whenever ferryDirection, curveSize, or route toggles change
     if (mapInstanceRef.current && routes) {
-      console.log('Redrawing map due to ferry controls change');
+      console.log('Redrawing map due to controls change');
       
       // Clear previous routes completely
       directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
@@ -377,13 +383,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       
       // Small delay to ensure clearing is complete
       setTimeout(() => {
-        // Redraw all routes with new settings
-        if (routes.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
-        if (routes.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
-        if (routes.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
+        // Redraw all routes with new settings (only if toggled on)
+        if (routes.car && routeToggles.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
+        if (routes.ferry && routeToggles.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
+        if (routes.plane && routeToggles.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
       }, 50);
     }
-  }, [ferryDirection, curveSize]);
+  }, [ferryDirection, curveSize, routeToggles]);
 
   if (isLoading) {
     return (
@@ -413,10 +419,26 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#3b82f6' }}></div>
           <span>🚗 Car Route</span>
+          <label className="route-toggle">
+            <input
+              type="checkbox"
+              checked={routeToggles.car}
+              onChange={(e) => setRouteToggles(prev => ({ ...prev, car: e.target.checked }))}
+            />
+            <span className="toggle-slider"></span>
+          </label>
         </div>
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#10b981' }}></div>
           <span>⛴️ Ferry Route</span>
+          <label className="route-toggle">
+            <input
+              type="checkbox"
+              checked={routeToggles.ferry}
+              onChange={(e) => setRouteToggles(prev => ({ ...prev, ferry: e.target.checked }))}
+            />
+            <span className="toggle-slider"></span>
+          </label>
           <button 
             className="ferry-controls-toggle"
             onClick={() => setShowFerryControls(!showFerryControls)}
@@ -428,6 +450,28 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#f59e0b' }}></div>
           <span>✈️ Plane Route</span>
+          <label className="route-toggle">
+            <input
+              type="checkbox"
+              checked={routeToggles.plane}
+              onChange={(e) => setRouteToggles(prev => ({ ...prev, plane: e.target.checked }))}
+            />
+            <span className="toggle-slider"></span>
+          </label>
+        </div>
+        
+        {/* Unit Toggle */}
+        <div className="unit-toggle-container">
+          <span>Units:</span>
+          <label className="unit-toggle">
+            <input
+              type="checkbox"
+              checked={useMetric}
+              onChange={(e) => setUseMetric(e.target.checked)}
+            />
+            <span className="toggle-slider"></span>
+            <span className="unit-label">{useMetric ? 'km' : 'mi'}</span>
+          </label>
         </div>
       </div>
       
