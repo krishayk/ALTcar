@@ -417,28 +417,26 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
     <div className="route-map">
       <div className="map-legend">
         <div className="legend-item">
-          <div className="legend-color" style={{ backgroundColor: '#3b82f6' }}></div>
+          <div 
+            className={`legend-color ${!routeToggles.car ? 'outlined' : ''}`}
+            style={{ 
+              backgroundColor: routeToggles.car ? '#3b82f6' : 'white',
+              border: `2px solid #3b82f6`
+            }}
+            onClick={() => setRouteToggles(prev => ({ ...prev, car: !prev.car }))}
+          ></div>
           <span>🚗 Car Route</span>
-          <label className="route-toggle">
-            <input
-              type="checkbox"
-              checked={routeToggles.car}
-              onChange={(e) => setRouteToggles(prev => ({ ...prev, car: e.target.checked }))}
-            />
-            <span className="toggle-slider"></span>
-          </label>
         </div>
         <div className="legend-item">
-          <div className="legend-color" style={{ backgroundColor: '#10b981' }}></div>
+          <div 
+            className={`legend-color ${!routeToggles.ferry ? 'outlined' : ''}`}
+            style={{ 
+              backgroundColor: routeToggles.ferry ? '#10b981' : 'white',
+              border: `2px solid #10b981`
+            }}
+            onClick={() => setRouteToggles(prev => ({ ...prev, ferry: !prev.ferry }))}
+          ></div>
           <span>⛴️ Ferry Route</span>
-          <label className="route-toggle">
-            <input
-              type="checkbox"
-              checked={routeToggles.ferry}
-              onChange={(e) => setRouteToggles(prev => ({ ...prev, ferry: e.target.checked }))}
-            />
-            <span className="toggle-slider"></span>
-          </label>
           <button 
             className="ferry-controls-toggle"
             onClick={() => setShowFerryControls(!showFerryControls)}
@@ -448,30 +446,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           </button>
         </div>
         <div className="legend-item">
-          <div className="legend-color" style={{ backgroundColor: '#f59e0b' }}></div>
+          <div 
+            className={`legend-color ${!routeToggles.plane ? 'outlined' : ''}`}
+            style={{ 
+              backgroundColor: routeToggles.plane ? '#f59e0b' : 'white',
+              border: `2px solid #f59e0b`
+            }}
+            onClick={() => setRouteToggles(prev => ({ ...prev, plane: !prev.plane }))}
+          ></div>
           <span>✈️ Plane Route</span>
-          <label className="route-toggle">
-            <input
-              type="checkbox"
-              checked={routeToggles.plane}
-              onChange={(e) => setRouteToggles(prev => ({ ...prev, plane: e.target.checked }))}
-            />
-            <span className="toggle-slider"></span>
-          </label>
-        </div>
-        
-        {/* Unit Toggle */}
-        <div className="unit-toggle-container">
-          <span>Units:</span>
-          <label className="unit-toggle">
-            <input
-              type="checkbox"
-              checked={useMetric}
-              onChange={(e) => setUseMetric(e.target.checked)}
-            />
-            <span className="toggle-slider"></span>
-            <span className="unit-label">{useMetric ? 'km' : 'mi'}</span>
-          </label>
         </div>
       </div>
       
@@ -517,6 +500,21 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           </div>
         </div>
       </div>
+      
+      {/* Unit Toggle */}
+      <div className="unit-toggle-container">
+        <span>Units:</span>
+        <label className="unit-toggle">
+          <input
+            type="checkbox"
+            checked={useMetric}
+            onChange={(e) => setUseMetric(e.target.checked)}
+          />
+          <span className="toggle-slider"></span>
+          <span className="unit-label">{useMetric ? 'km' : 'mi'}</span>
+        </label>
+      </div>
+      
       <div ref={mapRef} className="actual-map"></div>
     </div>
   );

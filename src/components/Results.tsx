@@ -1,7 +1,7 @@
 import React from 'react';
 import { ResultsProps } from '../types';
 
-const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferryDirection, curveSize }) => {
+const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferryDirection, curveSize, useMetric }) => {
   const saveRoutes = () => {
     if (!routes) return;
     
@@ -69,9 +69,34 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
+  const convertDistance = (miles: number) => {
+    if (useMetric) {
+      return `${(miles * 1.60934).toFixed(1)} km`;
+    }
+    return `${miles} mi`;
+  };
+
   return (
     <div className="results">
-      <h2>Route Comparison</h2>
+      <div className="results-header">
+        <h2>Route Comparison</h2>
+        <div className="unit-toggle-container">
+          <span>Units:</span>
+          <label className="unit-toggle">
+            <input
+              type="checkbox"
+              checked={useMetric}
+              onChange={(e) => {
+                // This will be handled by the parent component
+                // We need to add a callback prop for this
+              }}
+              disabled
+            />
+            <span className="toggle-slider"></span>
+            <span className="unit-label">{useMetric ? 'km' : 'mi'}</span>
+          </label>
+        </div>
+      </div>
       <div className="comparison-table">
         <table>
           <thead>
@@ -89,7 +114,7 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
                   <span className="mode-icon">🚗</span>
                   <span className="mode-name">Car</span>
                 </td>
-                <td>{routes.car.distance} miles</td>
+                <td>{convertDistance(routes.car.distance)}</td>
                 <td>{formatDuration(routes.car.duration)}</td>
                 <td className="cost">{formatCost(routes.car.cost)}</td>
               </tr>
@@ -100,7 +125,7 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
                   <span className="mode-icon">⛴️</span>
                   <span className="mode-name">Ferry</span>
                 </td>
-                <td>{routes.ferry.distance} miles</td>
+                <td>{convertDistance(routes.ferry.distance)}</td>
                 <td>{formatDuration(routes.ferry.duration)}</td>
                 <td className="cost">{formatCost(routes.ferry.cost)}</td>
               </tr>
@@ -111,7 +136,7 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
                   <span className="mode-icon">✈️</span>
                   <span className="mode-name">Plane</span>
                 </td>
-                <td>{routes.plane.distance} miles</td>
+                <td>{convertDistance(routes.plane.distance)}</td>
                 <td>{formatDuration(routes.plane.duration)}</td>
                 <td className="cost">{formatCost(routes.plane.cost)}</td>
               </tr>

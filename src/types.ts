@@ -63,6 +63,8 @@ export interface RouteMapProps {
   setFerryDirection: (direction: boolean) => void;
   curveSize: number;
   setCurveSize: (size: number) => void;
+  useMetric: boolean;
+  setUseMetric: (useMetric: boolean) => void;
 }
 
 export interface RouteFormProps {
@@ -84,4 +86,5 @@ export interface ResultsProps {
   onRouteSaved?: () => void;
   ferryDirection: boolean;
   curveSize: number;
+  useMetric: boolean;
 } 

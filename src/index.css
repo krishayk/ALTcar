@@ -147,6 +147,17 @@ body {
   width: 100% !important;
 }
 
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.results-header h2 {
+  margin: 0;
+}
+
 .result-card {
   text-align: center;
   padding: 15px;

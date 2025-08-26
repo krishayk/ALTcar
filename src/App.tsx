@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [savedRoutes, setSavedRoutes] = useState<any[]>([]);
   const [ferryDirection, setFerryDirection] = useState<boolean>(true); // true = left, false = right
   const [curveSize, setCurveSize] = useState<number>(5); // Controls the width of the ferry curve (default 5/10)
+  const [useMetric, setUseMetric] = useState<boolean>(false); // false = miles, true = kilometers
   const [startInput, setStartInput] = useState<string>('');
   const [endInput, setEndInput] = useState<string>('');
 
@@ -98,6 +99,8 @@ const App: React.FC = () => {
             setFerryDirection={setFerryDirection}
             curveSize={curveSize}
             setCurveSize={setCurveSize}
+            useMetric={useMetric}
+            setUseMetric={setUseMetric}
           />
           <Results 
             routes={routes} 
@@ -105,6 +108,7 @@ const App: React.FC = () => {
             onRouteSaved={handleRouteSaved}
             ferryDirection={ferryDirection}
             curveSize={curveSize}
+            useMetric={useMetric}
           />
         </>
       )}
