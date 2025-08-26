@@ -358,8 +358,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
     document.head.appendChild(script);
 
     return () => {
+      // Cleanup when routes change
       directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
       directionsRendererRefs.current = [];
+      polylineRefs.current.forEach(polyline => polyline.setMap(null));
+      polylineRefs.current = [];
+      markerRefs.current.forEach(marker => marker.map = null);
+      markerRefs.current = [];
       if (mapInstanceRef.current && mapRef.current) {
         mapRef.current.innerHTML = '';
       }
@@ -367,9 +372,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   }, [routes]);
 
   useEffect(() => {
-    // Redraw the map whenever ferryDirection, curveSize, or route toggles change
+    // Redraw the map whenever ferryDirection, curveSize, route toggles, or routes change
     if (mapInstanceRef.current && routes) {
-      console.log('Redrawing map due to controls change');
+      console.log('Redrawing map due to controls or routes change');
       
       // Clear previous routes completely
       directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
@@ -389,7 +394,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         if (routes.plane && routeToggles.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
       }, 50);
     }
-  }, [ferryDirection, curveSize, routeToggles]);
+  }, [ferryDirection, curveSize, routeToggles, routes]);
 
   if (isLoading) {
     return (
