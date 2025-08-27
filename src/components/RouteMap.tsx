@@ -32,6 +32,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   const initializeMap = () => {
     if (!mapRef.current || !routes) return;
     
+    // Check if Google Maps API is fully loaded
+    if (typeof google === 'undefined' || !google.maps || !google.maps.Map) {
+      console.log('Google Maps API not ready yet, retrying...');
+      setTimeout(initializeMap, 200);
+      return;
+    }
+    
     try {
       // Initialize the map
       const map = new google.maps.Map(mapRef.current!, {
@@ -333,8 +340,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
   useEffect(() => {
     if (!routes || !mapRef.current) return;
 
-    // Check if Google Maps API is already loaded
-    if (window.google && window.google.maps) {
+    // Check if Google Maps API is already loaded and fully ready
+    if (window.google && window.google.maps && window.google.maps.Map) {
       initializeMap();
       return;
     }
@@ -343,11 +350,11 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
     if (document.querySelector('script[src*="maps.googleapis.com"]')) {
       // Wait for existing script to load
       const checkInterval = setInterval(() => {
-        if (window.google && window.google.maps) {
+        if (window.google && window.google.maps && window.google.maps.Map) {
           clearInterval(checkInterval);
           initializeMap();
         }
-      }, 100);
+      }, 200);
       return;
     }
 
@@ -358,12 +365,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
     script.defer = true;
     
     script.onload = () => {
-      // Add a small delay to ensure API is fully loaded
-      setTimeout(() => {
-        if (window.google && window.google.maps) {
+      // Wait for API to be fully loaded
+      const checkReady = () => {
+        if (window.google && window.google.maps && window.google.maps.Map) {
           initializeMap();
+        } else {
+          setTimeout(checkReady, 100);
         }
-      }, 100);
+      };
+      checkReady();
     };
 
     document.head.appendChild(script);
