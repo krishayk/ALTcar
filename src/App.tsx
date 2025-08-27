@@ -122,6 +122,8 @@ const App: React.FC = () => {
             setSavedRoutes(saved);
           }}
           onViewRoute={handleViewRoute}
+          useMetric={useMetric}
+          setUseMetric={setUseMetric}
         />
       )}
     </div>

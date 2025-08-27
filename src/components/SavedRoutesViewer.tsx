@@ -16,9 +16,11 @@ interface SavedRoutesViewerProps {
   savedRoutes: SavedRoute[];
   onRouteDeleted: () => void;
   onViewRoute: (start: string, end: string) => void;
+  useMetric: boolean;
+  setUseMetric: (useMetric: boolean) => void;
 }
 
-const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRouteDeleted, onViewRoute }) => {
+const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRouteDeleted, onViewRoute, useMetric, setUseMetric }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedRoute, setExpandedRoute] = useState<string | null>(null);
 
@@ -59,13 +61,33 @@ const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRo
     });
   };
 
+  const convertDistance = (miles: number) => {
+    if (useMetric) {
+      return `${(miles * 1.60934).toFixed(1)} km`;
+    }
+    return `${miles} mi`;
+  };
+
   if (savedRoutes.length === 0) return null;
 
   return (
     <div className="saved-routes">
-      <div className="saved-routes-header" onClick={() => setIsExpanded(!isExpanded)}>
-        <h2>💾 Saved Route Comparisons ({savedRoutes.length})</h2>
-        <span className="dropdown-arrow">{isExpanded ? '▼' : '▶'}</span>
+      <div className="saved-routes-header">
+        <div className="header-left" onClick={() => setIsExpanded(!isExpanded)}>
+          <h2>💾 Saved Route Comparisons ({savedRoutes.length})</h2>
+          <span className="dropdown-arrow">{isExpanded ? '▼' : '▶'}</span>
+        </div>
+        <div className="unit-toggle-container">
+          <span>Units:</span>
+          <select 
+            className="unit-dropdown"
+            value={useMetric ? 'km' : 'mi'}
+            onChange={(e) => setUseMetric(e.target.value === 'km')}
+          >
+            <option value="mi">mi</option>
+            <option value="km">km</option>
+          </select>
+        </div>
       </div>
       
       {isExpanded && (
@@ -119,7 +141,7 @@ const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRo
                                 <span className="mode-icon">🚗</span>
                                 <span className="mode-name">Car</span>
                               </td>
-                              <td>{savedRoute.routes.car.distance} miles</td>
+                              <td>{convertDistance(savedRoute.routes.car.distance)}</td>
                               <td>{formatDuration(savedRoute.routes.car.duration)}</td>
                               <td className="cost">{formatCost(savedRoute.routes.car.cost)}</td>
                             </tr>
@@ -130,7 +152,7 @@ const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRo
                                 <span className="mode-icon">⛴️</span>
                                 <span className="mode-name">Ferry</span>
                               </td>
-                              <td>{savedRoute.routes.ferry.distance} miles</td>
+                              <td>{convertDistance(savedRoute.routes.ferry.distance)}</td>
                               <td>{formatDuration(savedRoute.routes.ferry.duration)}</td>
                               <td className="cost">{formatCost(savedRoute.routes.ferry.cost)}</td>
                             </tr>
@@ -141,7 +163,7 @@ const SavedRoutesViewer: React.FC<SavedRoutesViewerProps> = ({ savedRoutes, onRo
                                 <span className="mode-icon">✈️</span>
                                 <span className="mode-name">Plane</span>
                               </td>
-                              <td>{savedRoute.routes.plane.distance} miles</td>
+                              <td>{convertDistance(savedRoute.routes.plane.distance)}</td>
                               <td>{formatDuration(savedRoute.routes.plane.duration)}</td>
                               <td className="cost">{formatCost(savedRoute.routes.plane.cost)}</td>
                             </tr>
