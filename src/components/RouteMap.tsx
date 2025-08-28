@@ -1,11 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { RouteMapProps, RouteResponse } from '../types';
 
-// NOTE: To fix the "RefererNotAllowedMapError", you need to:
-// 1. Go to Google Cloud Console > APIs & Services > Credentials
-// 2. Find your Maps JavaScript API key
-// 3. Add "https://altroute-one.vercel.app/*" to the "Application restrictions" > "HTTP referrers (web sites)"
-// 4. Or set "Application restrictions" to "None" for development (less secure)
 
 interface AllRoutes {
   car: any;
