@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ResultsProps } from '../types';
 
 const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferryDirection, curveSize, useMetric, setUseMetric, flightInfo, startAirports, endAirports }) => {
@@ -7,7 +7,9 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
   const [seagliderEditMode, setSeagliderEditMode] = useState(false);
   const [seagliderData, setSeagliderData] = useState({
     distance: '',
+    distanceInMiles: '', // Store the original value in miles for conversion
     duration: '',
+    durationMinutes: '',
     cost: ''
   });
   const [seagliderDisplayData, setSeagliderDisplayData] = useState({
@@ -15,6 +17,21 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
     duration: '',
     cost: ''
   });
+
+  // Handle unit conversion for Seaglider distance when useMetric changes
+  useEffect(() => {
+    if (seagliderData.distanceInMiles && seagliderData.distanceInMiles !== '') {
+      const convertedDistance = convertSeagliderDistance(
+        seagliderData.distanceInMiles, 
+        false, // fromMetric (we store in miles)
+        useMetric // toMetric
+      );
+      setSeagliderData(prev => ({
+        ...prev,
+        distance: convertedDistance
+      }));
+    }
+  }, [useMetric, seagliderData.distanceInMiles]);
   const saveRoutes = () => {
     if (!routes) return;
     
@@ -73,6 +90,14 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
     return 'N/A';
   };
 
+  const formatFlightCost = (flightInfo: any) => {
+    if (flightInfo?.cost) {
+      const { average, currency } = flightInfo.cost;
+      return `${currency}${average}`;
+    }
+    return 'N/A';
+  };
+
   const formatDuration = (minutes: number) => {
     if (minutes < 60) {
       return `${minutes} min`;
@@ -89,8 +114,29 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
     return `${miles} mi`;
   };
 
+  const convertSeagliderDistance = (value: string, fromMetric: boolean, toMetric: boolean) => {
+    if (!value || value === '') return '';
+    
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return value;
+    
+    if (fromMetric && !toMetric) {
+      // Convert from km to miles
+      return (numValue / 1.60934).toFixed(1);
+    } else if (!fromMetric && toMetric) {
+      // Convert from miles to km
+      return (numValue * 1.60934).toFixed(1);
+    }
+    
+    return value; // No conversion needed
+  };
+
   const handleSeagliderSubmit = () => {
-    setSeagliderDisplayData({ ...seagliderData });
+    const combinedDuration = `${seagliderData.duration} hr ${seagliderData.durationMinutes} min`;
+    setSeagliderDisplayData({ 
+      ...seagliderData, 
+      duration: combinedDuration 
+    });
     setSeagliderEditMode(false);
   };
 
@@ -103,7 +149,7 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
   const removeSeagliderRow = () => {
     setShowSeagliderRow(false);
     setSeagliderEditMode(false);
-    setSeagliderData({ distance: '', duration: '', cost: '' });
+    setSeagliderData({ distance: '', distanceInMiles: '', duration: '', durationMinutes: '', cost: '' });
     setSeagliderDisplayData({ distance: '', duration: '', cost: '' });
   };
 
@@ -111,23 +157,26 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
     <div className="results">
       <div className="results-header">
         <h2>Route Comparison</h2>
+        <div className="results-controls">
+          <div className="unit-selector">
+            <label>Units:</label>
+            <select 
+              className="unit-dropdown"
+              value={useMetric ? 'km' : 'mi'}
+              onChange={(e) => setUseMetric(e.target.value === 'km')}
+            >
+              <option value="mi">Miles (mi)</option>
+              <option value="km">Kilometers (km)</option>
+            </select>
+          </div>
+        </div>
       </div>
       <div className="comparison-table">
         <table>
           <thead>
             <tr>
               <th>Transport Mode</th>
-              <th>
-                Distance
-                <select 
-                  className="unit-dropdown"
-                  value={useMetric ? 'km' : 'mi'}
-                  onChange={(e) => setUseMetric(e.target.value === 'km')}
-                >
-                  <option value="mi">mi</option>
-                  <option value="km">km</option>
-                </select>
-              </th>
+              <th>Distance</th>
               <th>Duration</th>
               <th>Total Cost</th>
             </tr>
@@ -143,6 +192,16 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
                 <td className="cost">{formatCost(routes.car.cost)}</td>
               </tr>
             )}
+            {flightInfo && (
+              <tr className="plane-row">
+                <td>
+                  <span className="mode-name">Plane</span>
+                </td>
+                <td>{convertDistance(flightInfo.distance)}</td>
+                <td>{formatDuration(flightInfo.duration)}</td>
+                <td className="cost">{formatFlightCost(flightInfo)}</td>
+              </tr>
+            )}
             {routes.ferry && (
               <tr className="ferry-row">
                 <td>
@@ -153,62 +212,65 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
                 <td className="cost">{formatCost(routes.ferry.cost)}</td>
               </tr>
             )}
-            {flightInfo && (
-              <tr className="plane-row">
-                <td>
-                  <span className="mode-name">Plane</span>
-                  <button 
-                    className="gear-button"
-                    onClick={() => setShowAirportPopup(true)}
-                    title="View airport details"
-                  >
-                    ⚙️
-                  </button>
-                </td>
-                <td>{convertDistance(flightInfo.distance)}</td>
-                <td>{formatDuration(flightInfo.duration)}</td>
-                <td className="cost">N/A</td>
-              </tr>
-            )}
             {showSeagliderRow && (
               <tr className="seaglider-row">
                 <td>
                   <span className="mode-name">Seaglider</span>
-                  <button 
-                    className="remove-seaglider-btn"
-                    onClick={removeSeagliderRow}
-                    title="Remove Seaglider row"
-                  >
-                    ×
-                  </button>
                 </td>
                 <td>
                   {seagliderEditMode ? (
-                    <input
-                      type="text"
-                      value={seagliderData.distance}
-                      onChange={(e) => setSeagliderData({...seagliderData, distance: e.target.value})}
-                      placeholder={useMetric ? "___ km" : "___ mi"}
-                      className="seaglider-input"
-                      onKeyPress={handleSeagliderKeyPress}
-                      autoFocus
-                    />
+                    <div className="seaglider-input-container">
+                      <input
+                        type="text"
+                        value={seagliderData.distance}
+                        onChange={(e) => {
+                          const inputValue = e.target.value;
+                          // Store the original value in miles for conversion
+                          const milesValue = useMetric ? 
+                            (inputValue ? (parseFloat(inputValue) / 1.60934).toString() : '') : 
+                            inputValue;
+                          
+                          setSeagliderData({
+                            ...seagliderData, 
+                            distance: inputValue,
+                            distanceInMiles: milesValue
+                          });
+                        }}
+                        placeholder="___"
+                        className="seaglider-input"
+                        onKeyPress={handleSeagliderKeyPress}
+                        autoFocus
+                      />
+                      <span className="unit-label">{useMetric ? "km" : "mi"}</span>
+                    </div>
                   ) : (
                     <span className="seaglider-display">
-                      {seagliderDisplayData.distance || (useMetric ? "___ km" : "___ mi")}
+                      {seagliderDisplayData.distance ? `${seagliderDisplayData.distance} ${useMetric ? "km" : "mi"}` : `___ ${useMetric ? "km" : "mi"}`}
                     </span>
                   )}
                 </td>
                 <td>
                   {seagliderEditMode ? (
-                    <input
-                      type="text"
-                      value={seagliderData.duration}
-                      onChange={(e) => setSeagliderData({...seagliderData, duration: e.target.value})}
-                      placeholder="__ hr __ min"
-                      className="seaglider-input"
-                      onKeyPress={handleSeagliderKeyPress}
-                    />
+                    <div className="seaglider-input-container">
+                      <input
+                        type="text"
+                        value={seagliderData.duration}
+                        onChange={(e) => setSeagliderData({...seagliderData, duration: e.target.value})}
+                        placeholder="__"
+                        className="seaglider-input"
+                        onKeyPress={handleSeagliderKeyPress}
+                      />
+                      <span className="unit-label">hr</span>
+                      <input
+                        type="text"
+                        value={seagliderData.durationMinutes || ''}
+                        onChange={(e) => setSeagliderData({...seagliderData, durationMinutes: e.target.value})}
+                        placeholder="__"
+                        className="seaglider-input"
+                        onKeyPress={handleSeagliderKeyPress}
+                      />
+                      <span className="unit-label">min</span>
+                    </div>
                   ) : (
                     <span className="seaglider-display">
                       {seagliderDisplayData.duration || "__ hr __ min"}
@@ -217,17 +279,20 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
                 </td>
                 <td>
                   {seagliderEditMode ? (
-                    <input
-                      type="text"
-                      value={seagliderData.cost}
-                      onChange={(e) => setSeagliderData({...seagliderData, cost: e.target.value})}
-                      placeholder="$___"
-                      className="seaglider-input"
-                      onKeyPress={handleSeagliderKeyPress}
-                    />
+                    <div className="seaglider-input-container">
+                      <input
+                        type="text"
+                        value={seagliderData.cost}
+                        onChange={(e) => setSeagliderData({...seagliderData, cost: e.target.value})}
+                        placeholder="___"
+                        className="seaglider-input"
+                        onKeyPress={handleSeagliderKeyPress}
+                      />
+                      <span className="unit-label">$</span>
+                    </div>
                   ) : (
                     <span className="seaglider-display">
-                      {seagliderDisplayData.cost || "$___"}
+                      {seagliderDisplayData.cost ? `$${seagliderDisplayData.cost}` : "$___"}
                     </span>
                   )}
                 </td>
@@ -258,6 +323,24 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
             }}
           >
             Add Seaglider Row
+          </button>
+        )}
+        {showSeagliderRow && (
+          <button 
+            className="remove-seaglider-btn" 
+            onClick={removeSeagliderRow}
+            title="Remove Seaglider row"
+          >
+            × Remove Seaglider
+          </button>
+        )}
+        {flightInfo && (
+          <button 
+            className="gear-button"
+            onClick={() => setShowAirportPopup(true)}
+            title="View airport details"
+          >
+            ⚙️ Airport Details
           </button>
         )}
         <button className="save-routes-btn" onClick={saveRoutes}>
@@ -325,7 +408,32 @@ const Results: React.FC<ResultsProps> = ({ routes, isLoading, onRouteSaved, ferr
                         <span className="stat-label">Duration:</span>
                         <span className="stat-value">{formatDuration(flightInfo.duration)}</span>
                       </div>
+                      <div className="flight-stat">
+                        <span className="stat-label">Average Price:</span>
+                        <span className="stat-value">{formatFlightCost(flightInfo)}</span>
+                      </div>
                     </div>
+                    
+                    {flightInfo.cost && (
+                      <div className="flight-offers">
+                        <h5>Available Flights</h5>
+                        <div className="offers-list">
+                          {flightInfo.cost.offers.map((offer, index) => (
+                            <div key={index} className="offer-item">
+                              <div className="offer-header">
+                                <span className="offer-price">{offer.currency}{offer.price}</span>
+                                <span className="offer-airline">{offer.airline}</span>
+                              </div>
+                              <div className="offer-details">
+                                <span className="offer-time">{offer.departureTime.split('T')[1].substring(0, 5)} → {offer.arrivalTime.split('T')[1].substring(0, 5)}</span>
+                                <span className="offer-duration">{offer.duration}</span>
+                                <span className="offer-stops">{offer.stops === 0 ? 'Direct' : `${offer.stops} stop${offer.stops > 1 ? 's' : ''}`}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

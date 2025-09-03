@@ -25,7 +25,17 @@ const RouteForm: React.FC<RouteFormProps> = ({ onCalculate, isLoading, startInpu
           startAutocompleteRef.current.addListener('place_changed', () => {
             const place = startAutocompleteRef.current?.getPlace();
             if (place && place.formatted_address) {
-              setStartInput(place.formatted_address);
+              // Use setTimeout to prevent interference with other inputs
+              setTimeout(() => {
+                setStartInput(place.formatted_address);
+              }, 0);
+            }
+          });
+
+          // Prevent autocomplete from interfering with manual typing
+          startInputRef.current.addEventListener('focus', () => {
+            if (startAutocompleteRef.current) {
+              startAutocompleteRef.current.set('types', ['geocode']);
             }
           });
         } catch (error) {
@@ -44,7 +54,17 @@ const RouteForm: React.FC<RouteFormProps> = ({ onCalculate, isLoading, startInpu
           endAutocompleteRef.current.addListener('place_changed', () => {
             const place = endAutocompleteRef.current?.getPlace();
             if (place && place.formatted_address) {
-              setEndInput(place.formatted_address);
+              // Use setTimeout to prevent interference with other inputs
+              setTimeout(() => {
+                setEndInput(place.formatted_address);
+              }, 0);
+            }
+          });
+
+          // Prevent autocomplete from interfering with manual typing
+          endInputRef.current.addEventListener('focus', () => {
+            if (endAutocompleteRef.current) {
+              endAutocompleteRef.current.set('types', ['geocode']);
             }
           });
         } catch (error) {

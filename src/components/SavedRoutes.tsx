@@ -6,9 +6,10 @@ interface SavedRoutesProps {
   currentRoute: RouteResponse | null;
   startAddress: string;
   endAddress: string;
+  useMetric?: boolean;
 }
 
-const SavedRoutes: React.FC<SavedRoutesProps> = ({ onRouteSelect, currentRoute, startAddress, endAddress }) => {
+const SavedRoutes: React.FC<SavedRoutesProps> = ({ onRouteSelect, currentRoute, startAddress, endAddress, useMetric = false }) => {
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -75,6 +76,13 @@ const SavedRoutes: React.FC<SavedRoutesProps> = ({ onRouteSelect, currentRoute, 
       return `${hours} h ${mins} m`;
     }
     return `${mins} m`;
+  };
+
+  const convertDistance = (miles: number) => {
+    if (useMetric) {
+      return `${(miles * 1.60934).toFixed(1)} km`;
+    }
+    return `${miles.toFixed(1)} mi`;
   };
 
   return (
@@ -163,7 +171,7 @@ const SavedRoutes: React.FC<SavedRoutesProps> = ({ onRouteSelect, currentRoute, 
             }}>
               <div style={{ marginBottom: '4px' }}><strong>From:</strong> {startAddress}</div>
               <div style={{ marginBottom: '4px' }}><strong>To:</strong> {endAddress}</div>
-              <div style={{ marginBottom: '4px' }}><strong>Distance:</strong> {currentRoute.distance.toFixed(1)} mi</div>
+              <div style={{ marginBottom: '4px' }}><strong>Distance:</strong> {convertDistance(currentRoute.distance)}</div>
               <div style={{ marginBottom: '4px' }}><strong>Time:</strong> {formatTime(currentRoute.duration)}</div>
               <div><strong>{currentRoute.transportMode === 'car' ? 'Fuel Cost' : 'Ticket Cost'}:</strong> ${currentRoute.transportMode === 'car' ? currentRoute.cost.fuel.toFixed(2) : (currentRoute.cost.ticket || 0).toFixed(2)}</div>
             </div>
@@ -248,7 +256,7 @@ const SavedRoutes: React.FC<SavedRoutesProps> = ({ onRouteSelect, currentRoute, 
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ fontSize: '14px', color: '#495057' }}>
-                    <span style={{ fontWeight: '600' }}>{route.distance.toFixed(1)} mi</span>
+                    <span style={{ fontWeight: '600' }}>{convertDistance(route.distance)}</span>
                     <span style={{ color: '#adb5bd', margin: '0 8px' }}>•</span>
                     <span style={{ fontWeight: '600' }}>{formatTime(route.duration)}</span>
                     <span style={{ color: '#adb5bd', margin: '0 8px' }}>•</span>

@@ -21,11 +21,109 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
     plane: true
   });
   const [useMetric, setUseMetric] = useState<boolean>(false);
-  const [isDrawingRoutes, setIsDrawingRoutes] = useState<boolean>(false);
+  const [mapKey, setMapKey] = useState<number>(0); // Key to force map refresh
+
+  // Function to refresh the entire map
+  const refreshMap = () => {
+    console.log('Refreshing map...');
+    
+    // Clear all existing map elements
+    directionsRendererRefs.current.forEach(renderer => {
+      if (renderer && renderer.setMap) {
+        renderer.setMap(null);
+      }
+    });
+    directionsRendererRefs.current = [];
+    
+    polylineRefs.current.forEach(polyline => {
+      if (polyline && polyline.setMap) {
+        polyline.setMap(null);
+      }
+    });
+    polylineRefs.current = [];
+    
+    markerRefs.current.forEach(marker => {
+      if (marker && marker.setMap) {
+        marker.setMap(null);
+      }
+    });
+    markerRefs.current = [];
+    
+    // Clear the map instance
+    mapInstanceRef.current = null;
+    
+    // Force re-render by updating the key
+    setMapKey(prev => prev + 1);
+    
+    // Reinitialize the map after a short delay
+    setTimeout(() => {
+      if (mapRef.current && window.google && window.google.maps && window.google.maps.Map) {
+        initializeMap();
+      }
+    }, 100);
+  };
+
+  // Function to force redraw the map with new routes
+  const redrawMapWithRoutes = () => {
+    if (!mapInstanceRef.current) {
+      console.log('No map instance available for redraw');
+      return;
+    }
+
+    console.log('Force redrawing map with routes:', routes);
+    
+    // Clear previous routes completely
+    directionsRendererRefs.current.forEach(renderer => {
+      if (renderer && renderer.setMap) {
+        renderer.setMap(null);
+      }
+    });
+    directionsRendererRefs.current = [];
+    
+    // Clear all stored polylines and markers
+    polylineRefs.current.forEach(polyline => {
+      if (polyline && polyline.setMap) {
+        polyline.setMap(null);
+      }
+    });
+    polylineRefs.current = [];
+    markerRefs.current.forEach(marker => {
+      if (marker && marker.setMap) {
+        marker.setMap(null);
+      }
+    });
+    markerRefs.current = [];
+    
+    // Add routes if they exist - no timeout to prevent loops
+    if (routes) {
+      console.log('Adding routes to existing map:', { 
+        car: routes.car && routeToggles.car, 
+        ferry: routes.ferry && routeToggles.ferry, 
+        plane: routes.plane && routeToggles.plane 
+      });
+      
+      if (routes.car && routeToggles.car) addRoute(routes.car, 'car', '#3b82f6');
+      if (routes.ferry && routeToggles.ferry) addRoute(routes.ferry, 'ferry', '#10b981');
+      if (routes.plane && routeToggles.plane) addRoute(routes.plane, 'plane', '#f59e0b');
+    }
+  };
 
   // Function to initialize the map
   const initializeMap = () => {
-    if (!mapRef.current || !routes) return;
+    console.log('initializeMap called with:', { 
+      mapRef: !!mapRef.current, 
+      routes: !!routes,
+      google: typeof google,
+      googleMaps: !!google?.maps,
+      googleMapsMap: !!google?.maps?.Map,
+      existingMap: !!mapInstanceRef.current
+    });
+    
+    if (!mapRef.current) {
+      console.log('Missing mapRef, retrying...');
+      setTimeout(initializeMap, 200);
+      return;
+    }
     
     // Check if Google Maps API is fully loaded
     if (typeof google === 'undefined' || !google.maps || !google.maps.Map) {
@@ -35,17 +133,25 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
     }
     
     try {
+      // If map already exists, don't recreate it
+      if (mapInstanceRef.current) {
+        console.log('Map already exists, skipping initialization');
+        return;
+      }
+      
+      console.log('Initializing Google Maps with element:', mapRef.current);
       // Initialize the map
       const map = new google.maps.Map(mapRef.current!, {
         center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
         zoom: 10,
-        mapTypeId: 'roadmap', // Use string instead of deprecated MapTypeId.ROADMAP
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
         mapTypeControl: true,
         streetViewControl: false,
         fullscreenControl: true
       });
 
       mapInstanceRef.current = map;
+      console.log('Google Maps initialized successfully!', map);
 
       // Initialize directions service
       const directionsService = new google.maps.DirectionsService();
@@ -54,13 +160,19 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
       directionsRendererRefs.current = [];
 
-      const bounds = new google.maps.LatLngBounds();
-      let routeCount = 0;
+      // Only add routes if they exist
+      if (routes) {
+        console.log('Adding initial routes to new map:', routes);
+        const bounds = new google.maps.LatLngBounds();
+        let routeCount = 0;
 
-      // Add each route with different colors (only if toggled on)
-      if (routes.car && routeToggles.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
-      if (routes.ferry && routeToggles.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
-      if (routes.plane && routeToggles.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
+        // Add each route with different colors (only if toggled on)
+        if (routes.car && routeToggles.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
+        if (routes.ferry && routeToggles.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
+        if (routes.plane && routeToggles.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
+      } else {
+        console.log('No routes to add to new map');
+      }
     } catch (error) {
       console.error('Error initializing Google Maps:', error);
     }
@@ -68,16 +180,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
 
   // Function to add a route
   const addRoute = (routeData: any, mode: string, color: string) => {
-    if (!routeData || !mapInstanceRef.current || isDrawingRoutes) {
-      console.log('addRoute: Missing data, map instance, or already drawing', { 
+    if (!routeData || !mapInstanceRef.current) {
+      console.log('addRoute: Missing data or map instance', { 
         routeData: !!routeData, 
-        mapInstance: !!mapInstanceRef.current, 
-        isDrawing: isDrawingRoutes 
+        mapInstance: !!mapInstanceRef.current
       });
       return;
     }
     
-    setIsDrawingRoutes(true);
+    console.log('Adding route:', mode, 'to map');
     const map = mapInstanceRef.current;
     console.log('Adding route:', mode, routeData);
 
@@ -325,92 +436,105 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         }
       });
     }
-    
-    // Reset the drawing flag after a short delay to allow all routes to be processed
-    setTimeout(() => {
-      setIsDrawingRoutes(false);
-    }, 100);
   };
 
   useEffect(() => {
-    if (!routes || !mapRef.current) return;
+    console.log('Map initialization useEffect triggered');
+    
+    if (!mapRef.current) {
+      console.log('No mapRef available yet');
+      return;
+    }
 
-    // Check if Google Maps API is already loaded and fully ready
+    // Check if Google Maps is already loaded
     if (window.google && window.google.maps && window.google.maps.Map) {
+      console.log('Google Maps API already loaded, initializing map...');
       initializeMap();
       return;
     }
 
-    // Check if script is already being loaded
-    if (document.querySelector('script[src*="maps.googleapis.com"]')) {
-      // Wait for existing script to load
-      const checkInterval = setInterval(() => {
-        if (window.google && window.google.maps && window.google.maps.Map) {
-          clearInterval(checkInterval);
-          initializeMap();
-        }
-      }, 200);
-      return;
-    }
-
-    // Load Google Maps API
-    const script = document.createElement('script');
-                  script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDDCPnY2orRksw08gpAdHNnBIQ4FqzMsrs&libraries=geometry,places&loading=async`;
-    script.async = true;
-    script.defer = true;
-    
-    script.onload = () => {
-      // Wait for API to be fully loaded
-      const checkReady = () => {
-        if (window.google && window.google.maps && window.google.maps.Map) {
-          initializeMap();
-        } else {
-          setTimeout(checkReady, 100);
-        }
-      };
-      checkReady();
+    // Listen for Google Maps API load event
+    const handleGoogleMapsLoaded = () => {
+      console.log('Google Maps API loaded event received, initializing map...');
+      initializeMap();
     };
 
-    document.head.appendChild(script);
+    window.addEventListener('googleMapsLoaded', handleGoogleMapsLoaded);
 
     return () => {
-      // Cleanup when routes change
-      directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
-      directionsRendererRefs.current = [];
-      polylineRefs.current.forEach(polyline => polyline.setMap(null));
-      polylineRefs.current = [];
-      markerRefs.current.forEach(marker => marker.map = null);
-      markerRefs.current = [];
-      if (mapInstanceRef.current && mapRef.current) {
-        mapRef.current.innerHTML = '';
+      window.removeEventListener('googleMapsLoaded', handleGoogleMapsLoaded);
+    };
+  }, []); // Initialize map once
+
+  // Additional useEffect to ensure map gets initialized when component is ready
+  useEffect(() => {
+    const checkAndInitializeMap = () => {
+      if (mapRef.current && window.google && window.google.maps && window.google.maps.Map && !mapInstanceRef.current) {
+        console.log('Component ready, initializing map...');
+        initializeMap();
       }
     };
-  }, [routes]);
+
+    // Check immediately
+    checkAndInitializeMap();
+
+    // Also check after a short delay in case the component isn't fully ready
+    const timeoutId = setTimeout(checkAndInitializeMap, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Separate useEffect for cleanup when component unmounts
+  useEffect(() => {
+    return () => {
+      // Cleanup when component unmounts
+      directionsRendererRefs.current.forEach(renderer => {
+        if (renderer && renderer.setMap) {
+          renderer.setMap(null);
+        }
+      });
+      directionsRendererRefs.current = [];
+      polylineRefs.current.forEach(polyline => {
+        if (polyline && polyline.setMap) {
+          polyline.setMap(null);
+        }
+      });
+      polylineRefs.current = [];
+      markerRefs.current.forEach(marker => {
+        if (marker && marker.setMap) {
+          marker.setMap(null);
+        }
+      });
+      markerRefs.current = [];
+    };
+  }, []);
 
   useEffect(() => {
-    // Redraw the map whenever ferryDirection, curveSize, route toggles, or routes change
+    // Redraw the map whenever ferryDirection, curveSize, or route toggles change (but not routes)
     if (mapInstanceRef.current && routes) {
-      console.log('Redrawing map due to controls or routes change');
-      
-      // Clear previous routes completely
-      directionsRendererRefs.current.forEach(renderer => renderer.setMap(null));
-      directionsRendererRefs.current = [];
-      
-      // Clear all stored polylines and markers
-      polylineRefs.current.forEach(polyline => polyline.setMap(null));
-      polylineRefs.current = [];
-      markerRefs.current.forEach(marker => marker.map = null);
-      markerRefs.current = [];
-      
-      // Small delay to ensure clearing is complete
-      setTimeout(() => {
-        // Redraw all routes with new settings (only if toggled on)
-        if (routes.car && routeToggles.car) addRoute(routes.car, 'car', '#3b82f6'); // Blue
-        if (routes.ferry && routeToggles.ferry) addRoute(routes.ferry, 'ferry', '#10b981'); // Green
-        if (routes.plane && routeToggles.plane) addRoute(routes.plane, 'plane', '#f59e0b'); // Orange
-      }, 50);
+      console.log('Redrawing map due to controls change (not routes)');
+      redrawMapWithRoutes();
     }
-  }, [ferryDirection, curveSize, routeToggles, routes]);
+  }, [ferryDirection, curveSize, routeToggles]); // Removed routes from dependencies
+
+  // Separate useEffect to handle new route calculations
+  useEffect(() => {
+    console.log('Routes changed, current routes:', routes);
+    
+    if (mapInstanceRef.current) {
+      // Use the dedicated redraw function
+      redrawMapWithRoutes();
+    } else {
+      console.log('No map instance available, attempting to initialize map...');
+      // Try to initialize the map if it doesn't exist
+      if (window.google && window.google.maps && window.google.maps.Map && mapRef.current) {
+        console.log('Google Maps API is available, initializing map now...');
+        initializeMap();
+      } else {
+        console.log('Google Maps API not ready or mapRef not available');
+      }
+    }
+  }, [routes]); // Only trigger on route changes
 
   if (isLoading) {
     return (
@@ -477,6 +601,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
           ></div>
           <span>✈️ Plane Route</span>
         </div>
+        <div className="legend-item">
+          <button 
+            className="refresh-map-btn"
+            onClick={refreshMap}
+            title="Refresh map"
+          >
+            🔄 Refresh Map
+          </button>
+        </div>
       </div>
       
       {/* Collapsible Ferry Controls Panel */}
@@ -524,7 +657,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
       
 
       
-      <div ref={mapRef} className="actual-map"></div>
+      <div ref={mapRef} key={mapKey} className="actual-map"></div>
     </div>
   );
 };

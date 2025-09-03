@@ -17,6 +17,29 @@ const OPENROUTE_BASE_URL = 'https://api.openrouteservice.org';
 const AERODATABOX_API_KEY = 'bf81a21606mshed33dbfe68ade4ep1d54fbjsn6c5398775ec2';
 const AERODATABOX_BASE_URL = 'https://aerodatabox.p.rapidapi.com';
 
+// Amadeus API configuration
+const AMADEUS_API_KEY = '80QiX1WZFwFhpXPO2IV2IhJW9WOWnE2G';
+const AMADEUS_API_SECRET = '8rsmNSDrEhKl8HAy';
+const AMADEUS_BASE_URL = 'https://test.api.amadeus.com';
+
+// Function to get Amadeus access token
+const getAmadeusToken = async () => {
+  try {
+    const response = await axios.post(`${AMADEUS_BASE_URL}/v1/security/oauth2/token`, 
+      `grant_type=client_credentials&client_id=${AMADEUS_API_KEY}&client_secret=${AMADEUS_API_SECRET}`,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+    return response.data.access_token;
+  } catch (error) {
+    console.error('Error getting Amadeus token:', error);
+    throw error;
+  }
+};
+
 // Proxy route for OpenRoute Geocoding API
 app.get('/api/geocode', async (req, res) => {
   try {
@@ -112,8 +135,50 @@ app.post('/api/airports', async (req, res) => {
   }
 });
 
+// Proxy route for Amadeus Flight Offers API
+app.post('/api/flight-offers', async (req, res) => {
+  try {
+    const { origin, destination, departureDate, adults = 1 } = req.body;
+    
+    if (!origin || !destination || !departureDate) {
+      return res.status(400).json({ 
+        error: 'Origin, destination, and departure date are required' 
+      });
+    }
+
+    // Get access token
+    const accessToken = await getAmadeusToken();
+
+    // Search for flight offers
+    const response = await axios.get(`${AMADEUS_BASE_URL}/v2/shopping/flight-offers`, {
+      params: {
+        originLocationCode: origin,
+        destinationLocationCode: destination,
+        departureDate: departureDate,
+        adults: adults,
+        max: 5 // Limit to 5 offers
+      },
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error proxying flight offers request:', error);
+    console.error('Response status:', error.response?.status);
+    console.error('Response data:', error.response?.data);
+    res.status(500).json({ 
+      error: 'Failed to fetch flight offers',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log('This server proxies OpenRoute API calls to avoid CORS issues');
   console.log('This server also proxies AeroDataBox API calls for airport data');
+  console.log('This server also proxies Amadeus API calls for flight pricing');
 });

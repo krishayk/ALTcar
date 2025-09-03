@@ -249,6 +249,27 @@ export interface FlightInfo {
   duration: number; // in minutes
   departureAirport: Airport;
   arrivalAirport: Airport;
+  cost?: FlightCostInfo; // Optional flight cost information
+}
+
+// Flight cost information interface
+export interface FlightCostInfo {
+  cheapest: number;
+  average: number;
+  mostExpensive: number;
+  currency: string;
+  offers: FlightOffer[];
+}
+
+// Individual flight offer interface
+export interface FlightOffer {
+  price: number;
+  currency: string;
+  airline: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  stops: number;
 }
 
 // Calculate flight time and distance between two airports
@@ -268,11 +289,15 @@ export const calculateFlightBetweenAirports = async (
     // Calculate flight time using realistic aviation algorithms
     const duration = calculateFlightTime(distance);
 
+    // Fetch flight costs from Amadeus API
+    const costInfo = await fetchFlightCosts(startAirport, endAirport);
+
     return {
       distance: Math.round(distance),
       duration: Math.round(duration),
       departureAirport: startAirport,
-      arrivalAirport: endAirport
+      arrivalAirport: endAirport,
+      cost: costInfo || undefined
     };
   } catch (error) {
     console.error('Error calculating flight between airports:', error);
@@ -311,4 +336,82 @@ const calculateFlightTime = (distanceMiles: number): number => {
   );
   
   return totalTime;
+};
+
+// Fetch flight costs from Amadeus API
+export const fetchFlightCosts = async (
+  departureAirport: Airport,
+  arrivalAirport: Airport
+): Promise<FlightCostInfo | null> => {
+  try {
+    // Use tomorrow's date for flight search
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const departureDate = tomorrow.toISOString().split('T')[0];
+
+    const response = await fetch('http://localhost:3001/api/flight-offers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        origin: departureAirport.iata,
+        destination: arrivalAirport.iata,
+        departureDate: departureDate,
+        adults: 1
+      })
+    });
+
+    if (!response.ok) {
+      console.warn('Flight offers API request failed:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data.data || data.data.length === 0) {
+      console.warn('No flight offers found');
+      return null;
+    }
+
+    // Process flight offers
+    const offers: FlightOffer[] = data.data.map((offer: any) => {
+      let price = parseFloat(offer.price.total);
+      const currency = offer.price.currency;
+      const itinerary = offer.itineraries[0];
+      const segments = itinerary.segments;
+      
+      // Convert EUR to USD if needed (approximate rate: 1 EUR = 1.08 USD)
+      if (currency === 'EUR') {
+        price = price * 1.08;
+      }
+      
+      return {
+        price: price,
+        currency: '$', // Always display in USD with $ symbol
+        airline: segments[0].carrierCode,
+        departureTime: segments[0].departure.at,
+        arrivalTime: segments[segments.length - 1].arrival.at,
+        duration: itinerary.duration,
+        stops: segments.length - 1
+      };
+    });
+
+    // Calculate price statistics
+    const prices = offers.map(offer => offer.price);
+    const cheapest = Math.min(...prices);
+    const mostExpensive = Math.max(...prices);
+    const average = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+
+    return {
+      cheapest: Math.round(cheapest),
+      average: Math.round(average),
+      mostExpensive: Math.round(mostExpensive),
+      currency: offers[0]?.currency || 'USD',
+      offers: offers.slice(0, 5) // Limit to 5 offers
+    };
+  } catch (error) {
+    console.error('Error fetching flight costs:', error);
+    return null;
+  }
 };
