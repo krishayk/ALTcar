@@ -173,7 +173,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
         
         // Generate smooth Bezier curve points
         const generateBezierCurve = (p0: any, p1: any, p2: any, p3: any, steps: number) => {
-          const curve = [];
+          const curve: { lat: number; lng: number }[] = [];
           for (let i = 0; i <= steps; i++) {
             const t = i / steps;
             const u = 1 - t;
@@ -355,7 +355,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ routes, isLoading, ferryDirection, 
 
     // Load Google Maps API
     const script = document.createElement('script');
-                  script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBr8Zc67G1uLpqvrNPr-ikt3NpQZMFQ4hs&libraries=geometry,places&loading=async`;
+                  script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDDCPnY2orRksw08gpAdHNnBIQ4FqzMsrs&libraries=geometry,places&loading=async`;
     script.async = true;
     script.defer = true;
     

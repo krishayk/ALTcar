@@ -13,6 +13,10 @@ app.use(express.json());
 const OPENROUTE_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZkM2MxYjJjY2E1OTRjMDA4N2UzZTc4ZjQyNmJiOWRiIiwiaCI6Im11cm11cjY0In0=';
 const OPENROUTE_BASE_URL = 'https://api.openrouteservice.org';
 
+// AeroDataBox API configuration
+const AERODATABOX_API_KEY = 'bf81a21606mshed33dbfe68ade4ep1d54fbjsn6c5398775ec2';
+const AERODATABOX_BASE_URL = 'https://aerodatabox.p.rapidapi.com';
+
 // Proxy route for OpenRoute Geocoding API
 app.get('/api/geocode', async (req, res) => {
   try {
@@ -72,7 +76,44 @@ app.post('/api/directions', async (req, res) => {
   }
 });
 
+// Proxy route for AeroDataBox Airports API
+app.post('/api/airports', async (req, res) => {
+  try {
+    const { latitude, longitude, limit = 10, radiusKm = 500 } = req.body;
+    
+    if (!latitude || !longitude) {
+      return res.status(400).json({ 
+        error: 'Latitude and longitude are required' 
+      });
+    }
+
+    const response = await axios.get(`${AERODATABOX_BASE_URL}/airports/search/location`, {
+      params: {
+        lat: latitude,
+        lon: longitude,
+        radiusKm: radiusKm,
+        limit: limit
+      },
+      headers: {
+        'X-RapidAPI-Key': AERODATABOX_API_KEY,
+        'X-RapidAPI-Host': 'aerodatabox.p.rapidapi.com'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error proxying airports request:', error);
+    console.error('Response status:', error.response?.status);
+    console.error('Response data:', error.response?.data);
+    res.status(500).json({ 
+      error: 'Failed to fetch airports',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log('This server proxies OpenRoute API calls to avoid CORS issues');
+  console.log('This server also proxies AeroDataBox API calls for airport data');
 });

@@ -3,7 +3,9 @@ import RouteForm from './components/RouteForm';
 import RouteMap from './components/RouteMap';
 import Results from './components/Results';
 import SavedRoutesViewer from './components/SavedRoutesViewer';
+
 import { calculateRoute } from './services/routeService';
+import { findClosestAirports, AirportSearchResponse, calculateFlightBetweenAirports, FlightInfo } from './services/airportService';
 import { RouteResponse } from './types';
 
 interface AllRoutes {
@@ -22,6 +24,10 @@ const App: React.FC = () => {
   const [useMetric, setUseMetric] = useState<boolean>(false); // false = miles, true = kilometers
   const [startInput, setStartInput] = useState<string>('');
   const [endInput, setEndInput] = useState<string>('');
+  const [startAirports, setStartAirports] = useState<AirportSearchResponse | null>(null);
+  const [endAirports, setEndAirports] = useState<AirportSearchResponse | null>(null);
+  const [flightInfo, setFlightInfo] = useState<FlightInfo | null>(null);
+  const [isLoadingAirports, setIsLoadingAirports] = useState(false);
 
   useEffect(() => {
     // Load saved routes on component mount
@@ -31,14 +37,17 @@ const App: React.FC = () => {
 
   const handleCalculateRoute = async (start: string, end: string) => {
     setIsLoading(true);
+    setIsLoadingAirports(true);
     setError(null);
     
     try {
-      // Calculate all three routes simultaneously
-      const [carRoute, ferryRoute, planeRoute] = await Promise.all([
+      // Calculate all three routes and find airports simultaneously
+      const [carRoute, ferryRoute, planeRoute, startAirportData, endAirportData] = await Promise.all([
         calculateRoute(start, end, 'car'),
         calculateRoute(start, end, 'ferry'),
-        calculateRoute(start, end, 'plane')
+        calculateRoute(start, end, 'plane'),
+        findClosestAirports(start, 3),
+        findClosestAirports(end, 3)
       ]);
       
       setRoutes({
@@ -46,11 +55,34 @@ const App: React.FC = () => {
         ferry: ferryRoute,
         plane: planeRoute
       });
+      
+      setStartAirports(startAirportData);
+      setEndAirports(endAirportData);
+      
+      // Calculate flight between the closest airports
+      if (startAirportData.airports.length > 0 && endAirportData.airports.length > 0) {
+        const closestStartAirport = startAirportData.airports[0];
+        const closestEndAirport = endAirportData.airports[0];
+        
+        try {
+          const flightData = await calculateFlightBetweenAirports(closestStartAirport, closestEndAirport);
+          setFlightInfo(flightData);
+        } catch (flightError) {
+          console.error('Error calculating flight between airports:', flightError);
+          setFlightInfo(null);
+        }
+      } else {
+        setFlightInfo(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setRoutes({ car: null, ferry: null, plane: null });
+      setStartAirports(null);
+      setEndAirports(null);
+      setFlightInfo(null);
     } finally {
       setIsLoading(false);
+      setIsLoadingAirports(false);
     }
   };
 
@@ -90,6 +122,8 @@ const App: React.FC = () => {
         </div>
       )}
 
+
+
       {hasAnyRoute && (
         <>
           <RouteMap 
@@ -110,6 +144,9 @@ const App: React.FC = () => {
             curveSize={curveSize}
             useMetric={useMetric}
             setUseMetric={setUseMetric}
+            flightInfo={flightInfo}
+            startAirports={startAirports}
+            endAirports={endAirports}
           />
         </>
       )}

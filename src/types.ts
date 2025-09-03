@@ -88,4 +88,7 @@ export interface ResultsProps {
   curveSize: number;
   useMetric: boolean;
   setUseMetric: (useMetric: boolean) => void;
+  flightInfo?: any; // Will be FlightInfo from airportService
+  startAirports?: any; // Will be AirportSearchResponse from airportService
+  endAirports?: any; // Will be AirportSearchResponse from airportService
 } 

@@ -16,32 +16,40 @@ const RouteForm: React.FC<RouteFormProps> = ({ onCalculate, isLoading, startInpu
 
       // Initialize start address autocomplete
       if (startInputRef.current && !startAutocompleteRef.current) {
-        startAutocompleteRef.current = new google.maps.places.Autocomplete(startInputRef.current, {
-          types: ['geocode'],
-          componentRestrictions: { country: 'us' }
-        });
+        try {
+          startAutocompleteRef.current = new google.maps.places.Autocomplete(startInputRef.current, {
+            types: ['geocode'],
+            componentRestrictions: { country: 'us' }
+          });
 
-        startAutocompleteRef.current.addListener('place_changed', () => {
-          const place = startAutocompleteRef.current?.getPlace();
-          if (place && place.formatted_address) {
-            setStartInput(place.formatted_address);
-          }
-        });
+          startAutocompleteRef.current.addListener('place_changed', () => {
+            const place = startAutocompleteRef.current?.getPlace();
+            if (place && place.formatted_address) {
+              setStartInput(place.formatted_address);
+            }
+          });
+        } catch (error) {
+          console.warn('Google Maps Autocomplete not available:', error);
+        }
       }
 
       // Initialize end address autocomplete
       if (endInputRef.current && !endAutocompleteRef.current) {
-        endAutocompleteRef.current = new google.maps.places.Autocomplete(endInputRef.current, {
-          types: ['geocode'],
-          componentRestrictions: { country: 'us' }
-        });
+        try {
+          endAutocompleteRef.current = new google.maps.places.Autocomplete(endInputRef.current, {
+            types: ['geocode'],
+            componentRestrictions: { country: 'us' }
+          });
 
-        endAutocompleteRef.current.addListener('place_changed', () => {
-          const place = endAutocompleteRef.current?.getPlace();
-          if (place && place.formatted_address) {
-            setEndInput(place.formatted_address);
-          }
-        });
+          endAutocompleteRef.current.addListener('place_changed', () => {
+            const place = endAutocompleteRef.current?.getPlace();
+            if (place && place.formatted_address) {
+              setEndInput(place.formatted_address);
+            }
+          });
+        } catch (error) {
+          console.warn('Google Maps Autocomplete not available:', error);
+        }
       }
     };
 

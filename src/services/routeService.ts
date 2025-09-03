@@ -295,11 +295,13 @@ export const calculateRoute = async (start: string, end: string, transportMode: 
   }
 };
 
-// Mock geocoding function that returns realistic coordinates for common cities
+// Google Maps geocoding function
 function geocodeAddress(address: string): Promise<{ lat: number; lng: number }> {
   return new Promise((resolve) => {
-    // Simulate API delay for realism
-    setTimeout(() => {
+    // Check if Google Maps API is available
+    if (typeof google === 'undefined' || !google.maps || !google.maps.Geocoder) {
+      console.warn('Google Maps API not available, using fallback');
+      // Fallback to mock geocoding
       const cityCoordinates: { [key: string]: { lat: number; lng: number } } = {
         'new york': { lat: 40.7128, lng: -74.0060 },
         'los angeles': { lat: 34.0522, lng: -118.2437 },
@@ -322,62 +324,20 @@ function geocodeAddress(address: string): Promise<{ lat: number; lng: number }> 
         'denver': { lat: 39.7392, lng: -104.9903 },
         'washington': { lat: 38.9072, lng: -77.0369 },
         'boston': { lat: 42.3601, lng: -71.0589 },
-        'el paso': { lat: 31.7619, lng: -106.4850 },
-        'nashville': { lat: 36.1627, lng: -86.7816 },
-        'detroit': { lat: 42.3314, lng: -83.0458 },
-        'oklahoma city': { lat: 35.4676, lng: -97.5164 },
-        'portland': { lat: 45.5152, lng: -122.6784 },
-        'las vegas': { lat: 36.1699, lng: -115.1398 },
-        'memphis': { lat: 35.1495, lng: -90.0490 },
-        'louisville': { lat: 38.2527, lng: -85.7585 },
-        'baltimore': { lat: 39.2904, lng: -76.6122 },
-        'milwaukee': { lat: 43.0389, lng: -87.9065 },
-        'albuquerque': { lat: 35.0844, lng: -106.6504 },
-        'tucson': { lat: 32.2226, lng: -110.9747 },
-        'fresno': { lat: 36.7378, lng: -119.7871 },
-        'sacramento': { lat: 38.5816, lng: -121.4944 },
-        'atlanta': { lat: 33.7490, lng: -84.3880 },
-        'long beach': { lat: 33.7701, lng: -118.1937 },
-        'colorado springs': { lat: 38.8339, lng: -104.8214 },
-        'raleigh': { lat: 35.7796, lng: -78.6382 },
         'miami': { lat: 25.7617, lng: -80.1918 },
-        'omaha': { lat: 41.2565, lng: -95.9345 },
-        'oakland': { lat: 37.8044, lng: -122.2711 },
+        'atlanta': { lat: 33.7490, lng: -84.3880 },
+        'detroit': { lat: 42.3314, lng: -83.0458 },
         'minneapolis': { lat: 44.9778, lng: -93.2650 },
-        'tulsa': { lat: 36.1540, lng: -95.9928 },
         'cleveland': { lat: 41.4993, lng: -81.6944 },
-        'wichita': { lat: 37.6872, lng: -97.3301 },
-        'arlington': { lat: 32.7357, lng: -97.1081 },
-        'new orleans': { lat: 29.9511, lng: -90.0715 },
-        'bakersfield': { lat: 35.3733, lng: -119.0187 },
-        'tampa': { lat: 27.9506, lng: -82.4572 },
-        'honolulu': { lat: 21.3099, lng: -157.8581 },
-        'aurora': { lat: 39.7294, lng: -104.8319 },
-        'anaheim': { lat: 33.8366, lng: -117.9143 },
-        'santa ana': { lat: 33.7455, lng: -117.8677 },
-        'corpus christi': { lat: 27.8006, lng: -97.3964 },
-        'riverside': { lat: 33.9533, lng: -117.3962 },
-        'lexington': { lat: 32.2226, lng: -84.5037 },
-        'stockton': { lat: 37.9577, lng: -121.2908 },
-        'henderson': { lat: 36.0395, lng: -114.9817 },
-        'saint paul': { lat: 44.9537, lng: -93.0900 },
-        'st. paul': { lat: 44.9537, lng: -93.0900 },
-        'st louis': { lat: 38.6270, lng: -90.1994 },
-        'cincinnati': { lat: 39.1031, lng: -84.5120 },
         'pittsburgh': { lat: 40.4406, lng: -79.9959 },
         'anchorage': { lat: 61.2181, lng: -149.9003 },
+        'honolulu': { lat: 21.3099, lng: -157.8581 },
         'livermore': { lat: 37.6819, lng: -121.7680 },
-        'dublin': { lat: 37.7021, lng: -121.9358 },
-        'sfo': { lat: 37.6213, lng: -122.3790 },
-        'lax': { lat: 33.9416, lng: -118.4085 },
-        'san francisco airport': { lat: 37.6213, lng: -122.3790 },
-        'los angeles airport': { lat: 33.9416, lng: -118.4085 }
+        'dublin': { lat: 37.7021, lng: -121.9358 }
       };
 
-      // Normalize the address for matching
       const normalizedAddress = address.toLowerCase().trim();
       
-      // Try to find a city match (more flexible matching)
       for (const [city, coords] of Object.entries(cityCoordinates)) {
         if (normalizedAddress.includes(city) || city.includes(normalizedAddress.split(',')[0])) {
           resolve(coords);
@@ -385,20 +345,69 @@ function geocodeAddress(address: string): Promise<{ lat: number; lng: number }> 
         }
       }
       
-      // Try to extract city from address and match
-      const addressParts = normalizedAddress.split(',').map(part => part.trim());
-      for (const part of addressParts) {
+      // Default to NYC if no match found
+      resolve({ lat: 40.7128, lng: -74.0060 });
+      return;
+    }
+
+    // Use Google Maps Geocoder
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: address }, (results, status) => {
+      if (status === 'OK' && results && results[0]) {
+        const location = results[0].geometry.location;
+        resolve({
+          lat: location.lat(),
+          lng: location.lng()
+        });
+      } else {
+        console.warn('Google Maps geocoding failed:', status);
+        // Fallback to mock geocoding
+        const cityCoordinates: { [key: string]: { lat: number; lng: number } } = {
+          'new york': { lat: 40.7128, lng: -74.0060 },
+          'los angeles': { lat: 34.0522, lng: -118.2437 },
+          'chicago': { lat: 41.8781, lng: -87.6298 },
+          'houston': { lat: 29.7604, lng: -95.3698 },
+          'phoenix': { lat: 33.4484, lng: -112.0740 },
+          'philadelphia': { lat: 39.9526, lng: -75.1652 },
+          'san antonio': { lat: 29.4241, lng: -98.4936 },
+          'san diego': { lat: 32.7157, lng: -117.1611 },
+          'dallas': { lat: 32.7767, lng: -96.7970 },
+          'san jose': { lat: 37.3382, lng: -121.8863 },
+          'austin': { lat: 30.2672, lng: -97.7431 },
+          'jacksonville': { lat: 30.3322, lng: -81.6557 },
+          'fort worth': { lat: 32.7555, lng: -97.3308 },
+          'columbus': { lat: 39.9612, lng: -82.9988 },
+          'charlotte': { lat: 35.2271, lng: -80.8431 },
+          'san francisco': { lat: 37.7749, lng: -122.4194 },
+          'indianapolis': { lat: 39.7684, lng: -86.1581 },
+          'seattle': { lat: 47.6062, lng: -122.3321 },
+          'denver': { lat: 39.7392, lng: -104.9903 },
+          'washington': { lat: 38.9072, lng: -77.0369 },
+          'boston': { lat: 42.3601, lng: -71.0589 },
+          'miami': { lat: 25.7617, lng: -80.1918 },
+          'atlanta': { lat: 33.7490, lng: -84.3880 },
+          'detroit': { lat: 42.3314, lng: -83.0458 },
+          'minneapolis': { lat: 44.9778, lng: -93.2650 },
+          'cleveland': { lat: 41.4993, lng: -81.6944 },
+          'pittsburgh': { lat: 40.4406, lng: -79.9959 },
+          'anchorage': { lat: 61.2181, lng: -149.9003 },
+          'honolulu': { lat: 21.3099, lng: -157.8581 },
+          'livermore': { lat: 37.6819, lng: -121.7680 },
+          'dublin': { lat: 37.7021, lng: -121.9358 }
+        };
+
+        const normalizedAddress = address.toLowerCase().trim();
+        
         for (const [city, coords] of Object.entries(cityCoordinates)) {
-          if (part.includes(city) || city.includes(part)) {
+          if (normalizedAddress.includes(city) || city.includes(normalizedAddress.split(',')[0])) {
             resolve(coords);
             return;
           }
         }
+        
+        // Default to NYC if no match found
+        resolve({ lat: 40.7128, lng: -74.0060 });
       }
-      
-      // If no match, return NYC coordinates as default
-      console.warn(`No coordinates found for "${address}", using NYC as default`);
-      resolve({ lat: 40.7128, lng: -74.0060 });
-    }, 100);
+    });
   });
 } 
